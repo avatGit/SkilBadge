@@ -970,7 +970,7 @@ function wireNavigation() {
 
   const goLogin = async () => {
     await deconnecter();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   };
   document.getElementById("btn-logout")?.addEventListener("click", goLogin);
   document.getElementById("btn-logout-mobile")?.addEventListener("click", goLogin);
@@ -1044,7 +1044,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cleanupListeners();
 
     if (!user) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
       return;
     }
 

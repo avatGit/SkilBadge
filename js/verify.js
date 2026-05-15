@@ -22,7 +22,7 @@ let filteredApprenants = [];
 // ─────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
     return;
   }
 
@@ -32,7 +32,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!profil || profil.role !== "recruteur") {
       alert("Accès réservé aux recruteurs autorisés.");
-      window.location.href = "login.html";
+      window.location.href = "index.html";
       return;
     }
 
@@ -338,7 +338,7 @@ document.getElementById("btn-print")?.addEventListener("click", () => {
 document.getElementById("btn-logout")?.addEventListener("click", async () => {
   try {
     await signOut(auth);
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   } catch (e) {
     console.error(e);
   }

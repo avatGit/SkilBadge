@@ -64,7 +64,7 @@
 
     <!-- Logo -->
     <div class="text-center mb-10">
-      <a href="login.html" class="inline-flex items-center gap-3">
+      <a href="index.html" class="inline-flex items-center gap-3">
         <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-600 text-base font-bold text-white shadow-lg shadow-blue-500/30">SB</span>
         <span class="text-xl font-bold text-white">SkillBadge</span>
       </a>
@@ -191,7 +191,7 @@
 
         <!-- Boutons -->
         <div class="mt-8 flex flex-col sm:flex-row gap-3">
-          <a href="login.html" id="btn-accueil"
+          <a href="index.html" id="btn-accueil"
              class="flex-1 rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 text-center transition hover:bg-slate-800 hover:scale-[1.02]">
             ← Retour à l'accueil
           </a>
@@ -219,13 +219,13 @@
     // Auth guard : rediriger si l'utilisateur n'est pas en attente
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
 
       const profil = await getProfil(user.uid);
       if (!profil) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
       }
 
@@ -248,7 +248,7 @@
     // Bouton déconnexion
     document.getElementById('btn-deconnexion').addEventListener('click', async () => {
       await signOut(auth);
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     });
   </script>
 

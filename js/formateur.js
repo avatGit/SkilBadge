@@ -984,7 +984,7 @@ function wireNavigationUi() {
     } catch (e) {
       console.error(e);
     }
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 
   const search = document.getElementById("search-apprenant");
@@ -1011,12 +1011,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!user) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
       return;
     }
 
     if (!profil) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
       return;
     }
 

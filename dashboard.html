@@ -94,7 +94,7 @@
       </div>
       <h2 class="text-xl font-bold text-gray-800 mb-2">Oups !</h2>
       <p id="error-message" class="text-gray-600 text-sm mb-4">Une erreur est survenue.</p>
-      <a href="login.html"
+      <a href="index.html"
         class="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
         Retour à la connexion
       </a>
@@ -168,7 +168,7 @@
     // Observer l'état de connexion
     onAuthStateChanged(auth, async (user) => {
       if (!user || redirectInProgress) {
-        if (!user && !redirectInProgress) window.location.href = 'login.html';
+        if (!user && !redirectInProgress) window.location.href = 'index.html';
         return;
       }
 
