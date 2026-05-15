@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillBadge — Demande en cours d'examen</title>
+  <meta name="description" content="Votre demande de compte formateur SkillBadge est en cours d'examen par l'équipe d'administration." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-12px)' },
+            }
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+
+    .step-line { background: linear-gradient(90deg, #2563eb 0%, #64748b 100%); }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes orbit {
+      from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+      to   { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+    }
+    .orbit-dot { animation: orbit 4s linear infinite; }
+    .orbit-dot-2 { animation: orbit 4s linear infinite reverse; animation-delay: -2s; }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Fond animé -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-blue-600/5 blur-3xl animate-pulse-slow"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-indigo-600/5 blur-3xl animate-pulse-slow" style="animation-delay:1.5s"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-slate-800/50"></div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-xl mx-auto">
+
+    <!-- Logo -->
+    <div class="text-center mb-10">
+      <a href="login.html" class="inline-flex items-center gap-3">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-600 text-base font-bold text-white shadow-lg shadow-blue-500/30">SB</span>
+        <span class="text-xl font-bold text-white">SkillBadge</span>
+      </a>
+    </div>
+
+    <!-- Carte principale -->
+    <div class="rounded-2xl border border-slate-700 bg-[#1e293b] shadow-2xl overflow-hidden">
+
+      <!-- Icône animée -->
+      <div class="flex justify-center pt-10 pb-6">
+        <div class="relative">
+          <!-- Anneau externe -->
+          <div class="h-24 w-24 rounded-full border-2 border-amber-500/30 flex items-center justify-center">
+            <!-- Anneau pulsant -->
+            <div class="absolute h-24 w-24 rounded-full border-2 border-amber-500/20 animate-ping"></div>
+            <!-- Icône centrale -->
+            <div class="h-16 w-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <svg class="h-8 w-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Points en orbite -->
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="orbit-dot h-2.5 w-2.5 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50"></div>
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="orbit-dot-2 h-2 w-2 rounded-full bg-blue-400 shadow-lg shadow-blue-400/50"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenu -->
+      <div class="px-8 pb-8 text-center">
+        <h1 class="text-2xl font-bold text-white">Demande en cours d'examen</h1>
+        <p class="mt-3 text-slate-400 leading-relaxed">
+          Votre dossier de formateur a été soumis avec succès et est <span class="text-amber-400 font-medium">en attente d'approbation</span>. 
+          L'équipe SkillBadge l'examinera dans les <strong class="text-white">24 à 48 heures</strong>.
+        </p>
+
+        <!-- Badge statut -->
+        <div class="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-700/50 bg-amber-500/10 px-4 py-2">
+          <span class="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span class="text-sm font-medium text-amber-300">Statut : En attente d'approbation</span>
+        </div>
+
+        <!-- Étapes du processus -->
+        <div class="mt-8 text-left space-y-4">
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-500">Processus de validation</h2>
+
+          <!-- Étape 1 : Soumission ✅ -->
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 h-7 w-7 rounded-full bg-emerald-500/20 border border-emerald-600 flex items-center justify-center mt-0.5">
+              <svg class="h-3.5 w-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-emerald-400">Dossier soumis</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vos informations ont été reçues avec succès</p>
+            </div>
+          </div>
+
+          <!-- Ligne -->
+          <div class="ml-3.5 h-4 w-px bg-slate-700"></div>
+
+          <!-- Étape 2 : Examen 🔄 -->
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 h-7 w-7 rounded-full bg-amber-500/20 border border-amber-600 flex items-center justify-center mt-0.5">
+              <svg class="h-3.5 w-3.5 text-amber-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-amber-400">Examen par l'admin</p>
+              <p class="text-xs text-slate-500 mt-0.5">Votre portfolio et vos preuves sociales sont évalués</p>
+            </div>
+          </div>
+
+          <!-- Ligne -->
+          <div class="ml-3.5 h-4 w-px bg-slate-700"></div>
+
+          <!-- Étape 3 : Décision -->
+          <div class="flex items-start gap-3 opacity-40">
+            <div class="flex-shrink-0 h-7 w-7 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center mt-0.5">
+              <svg class="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-400">Notification par email</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vous recevrez notre décision par email</p>
+            </div>
+          </div>
+
+          <!-- Ligne -->
+          <div class="ml-3.5 h-4 w-px bg-slate-700 opacity-30"></div>
+
+          <!-- Étape 4 : Accès -->
+          <div class="flex items-start gap-3 opacity-30">
+            <div class="flex-shrink-0 h-7 w-7 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center mt-0.5">
+              <svg class="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-500">Accès activé</p>
+              <p class="text-xs text-slate-500 mt-0.5">Vous pourrez émettre des badges certifiés</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info contact -->
+        <div class="mt-8 rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-left">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact admin</p>
+          <div class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <a href="mailto:admin@skillbadge.bf" class="text-sm text-primary-400 hover:text-primary-300 transition">admin@skillbadge.bf</a>
+          </div>
+          <p class="mt-2 text-xs text-slate-600">Pour toute question sur votre dossier, contactez-nous avec votre email d'inscription.</p>
+        </div>
+
+        <!-- Boutons -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-3">
+          <a href="login.html" id="btn-accueil"
+             class="flex-1 rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 text-center transition hover:bg-slate-800 hover:scale-[1.02]">
+            ← Retour à l'accueil
+          </a>
+          <button type="button" id="btn-deconnexion"
+                  class="flex-1 rounded-lg border border-red-900/50 bg-red-900/20 px-4 py-2.5 text-sm font-medium text-red-400 text-center transition hover:bg-red-900/30 hover:scale-[1.02]">
+            Se déconnecter
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-6 text-center text-xs text-slate-600">
+      SkillBadge Phase 3 · MIABE Hackathon 2026 · Certification NFT sur Polygon Amoy
+    </p>
+
+  </div>
+
+  <script type="module">
+    import { auth } from './js/firebase.js';
+    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    import { getProfil } from './js/auth.js';
+
+    // Auth guard : rediriger si l'utilisateur n'est pas en attente
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const profil = await getProfil(user.uid);
+      if (!profil) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Si le compte est approuvé → rediriger vers le dashboard formateur
+      if (profil.role === 'formateur' && profil.statut === 'approuve') {
+        window.location.href = 'formateur.html';
+      }
+
+      // Si le compte est refusé → afficher message différent
+      if (profil.role === 'formateur' && profil.statut === 'refuse') {
+        document.querySelector('h1').textContent = 'Demande refusée';
+        document.querySelector('.text-amber-300').textContent = 'Statut : Refusé';
+        document.querySelector('.text-amber-300').parentElement.classList.remove('border-amber-700/50', 'bg-amber-500/10');
+        document.querySelector('.text-amber-300').parentElement.classList.add('border-red-700/50', 'bg-red-500/10');
+        document.querySelector('.text-amber-300').classList.remove('text-amber-300');
+        document.querySelector('.text-amber-300') || document.querySelector('.text-red-300');
+      }
+    });
+
+    // Bouton déconnexion
+    document.getElementById('btn-deconnexion').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>

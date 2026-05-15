@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Firebase</title>
+</head>
+<body>
+    <h1>Test de connexion à Firebase</h1>
+    <button id="btn-test">Se connecter à Firebase</button>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import {auth, db } from './js/firebase.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';        
+        import { ref, set, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        document.getElementById('btn-test').onclick = async () => {
+            const output = document.getElementById('output');
+            output.textContent = "Connexion en Cours...";
+
+            onAuthStateChanged(auth, async (user) => {
+                if(user) {
+                    output.textContent += `\nUtilisateur connecté : ${user.email}`;
+
+                    // Test d'ecriture
+                    try {
+                        await set(ref(db, `test/${Date.now()}`), { message: "Hello Phase 3 Firebase", timestamp: Date.now() });
+                        output.textContent += `/Eciture réussie!`;
+
+                        // Test de lecture
+                        const snap = await get(ref(db, 'test'));
+                        output.textContent += `\nLecture réussie : ${JSON.stringify(snap.val(), null, 2)}`;
+                    } catch (error) {
+                        output.textContent += `\nErreur : ${error.message}`;
+                    }
+                } else {
+                    output.textContent += `\nAucun utilisateur connecté. Veuillez vous connecter à Firebase.`;
+                }
+            })
+        }
+    </script>
+</body>
+</html>

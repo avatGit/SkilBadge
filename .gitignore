@@ -1,0 +1,32 @@
+#  Secrets & Env
+.env
+.env.local
+*.key
+*.pem
+
+#  Blockchain (CRITIQUE)
+private-key.txt
+deployment-config.json
+
+#  Dependencies (si tu as un dossier contracts/)
+contracts/node_modules/
+contracts/dist/
+contracts/artifacts/
+contracts/cache/
+
+#   Système & Éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+#  Assets temporaires
+*.log
+tmp/
+temp/
+
+#  Build (si jamais)
+dist/
+build/

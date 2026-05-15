@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkillBadge — Connexion</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Configuration des couleurs -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen flex items-center justify-center p-4">
+
+  <!-- Container principal -->
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
+    
+    <!-- Header avec logo -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-8 text-center">
+      <div class="w-16 h-16 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+        <span class="text-3xl font-bold text-primary-600">SB</span>
+      </div>
+      <h1 class="text-2xl font-bold text-white">SkillBadge</h1>
+      <p class="text-blue-100 text-sm mt-1">Certification blockchain des compétences</p>
+    </div>
+
+    <!-- Onglets Connexion / Inscription -->
+    <div class="flex border-b border-gray-200">
+      <button id="tab-login" onclick="showTab('login')" class="flex-1 py-4 px-6 text-sm font-semibold transition tab-active">
+        Connexion
+      </button>
+      <button id="tab-register" onclick="showTab('register')" class="flex-1 py-4 px-6 text-sm font-semibold transition tab-inactive">
+        Créer un compte
+      </button>
+    </div>
+
+    <!-- Contenu -->
+    <div class="p-8">
+      
+      <!-- FORMULAIRE DE CONNEXION -->
+      <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
+          <input type="email" id="login-email" required 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="vous@exemple.com">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+          <input type="password" id="login-password" required 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="••••••••">
+        </div>
+
+        <button type="submit" id="btn-login" 
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
+          Se connecter
+        </button>
+
+        <div id="login-error" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"></div>
+      </form>
+
+      <!-- FORMULAIRE D'INSCRIPTION -->
+      <form id="form-register" class="space-y-5 hidden" onsubmit="handleRegister(event)">
+        
+        <!-- Sélection du rôle -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Je suis</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectRole('apprenant')" id="role-apprenant" 
+                    class="role-btn px-3 py-2 border-2 border-primary-600 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium transition">
+               Apprenant
+            </button>
+            <button type="button" onclick="selectRole('formateur')" id="role-formateur" 
+                    class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
+               Formateur
+            </button>
+            <button type="button" onclick="selectRole('recruteur')" id="role-recruteur" 
+                    class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
+               Recruteur
+            </button>
+          </div>
+          <input type="hidden" id="register-role" value="apprenant">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+          <input type="text" id="register-nom" required 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="Mamadou TRAORÉ">
+        </div>
+
+        <div id="field-organisation" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Organisation / Centre</label>
+          <input type="text" id="register-organisation" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="Cercle Numérique">
+        </div>
+
+        <!-- Champs supplémentaires formateur -->
+        <div id="field-portfolio" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Portfolio / LinkedIn / GitHub
+            <span class="text-gray-400 font-normal text-xs">(recommandé)</span>
+          </label>
+          <input type="url" id="register-portfolio" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition font-mono text-sm"
+                 placeholder="https://linkedin.com/in/votre-profil">
+        </div>
+
+        <div id="field-preuves" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Preuves sociales
+            <span class="text-gray-400 font-normal text-xs">(expériences, certifications…)</span>
+          </label>
+          <textarea id="register-preuves" rows="3"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm resize-none"
+                    placeholder="Ex: 5 ans d'expérience en développement web, certifié AWS…"></textarea>
+        </div>
+
+        <div id="field-adresse" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Adresse du centre
+            <span class="text-gray-400 font-normal text-xs">(optionnel si indépendant)</span>
+          </label>
+          <input type="text" id="register-adresse" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm"
+                 placeholder="Quartier Gounghin, Ouagadougou">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
+          <input type="email" id="register-email" required 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="vous@exemple.com">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+          <input type="password" id="register-password" required minlength="6"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                 placeholder="Au moins 6 caractères">
+        </div>
+
+        <button type="submit" id="btn-register" 
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
+          Créer mon compte
+        </button>
+
+        <div id="register-error" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"></div>
+      </form>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500 border-t border-gray-200">
+      <p>SkillBadge Phase 3 • MIABE Hackathon 2026</p>
+      <p class="mt-1">Certification NFT sur Polygon Amoy</p>
+    </div>
+
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <span id="toast-message">Succès !</span>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script type="module">
+    // Imports Firebase (CDN)
+    import { auth } from './js/firebase.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    //import { ref, set, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+    import { inscrire, connecter, getProfil } from './js/auth.js';
+
+    // Gestion des onglets
+    window.showTab = function(tab) {
+      const loginForm = document.getElementById('form-login');
+      const registerForm = document.getElementById('form-register');
+      const loginTab = document.getElementById('tab-login');
+      const registerTab = document.getElementById('tab-register');
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.className = "flex-1 py-4 px-6 text-sm font-semibold transition tab-active";
+        registerTab.className = "flex-1 py-4 px-6 text-sm font-semibold transition tab-inactive";
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        loginTab.className = "flex-1 py-4 px-6 text-sm font-semibold transition tab-inactive";
+        registerTab.className = "flex-1 py-4 px-6 text-sm font-semibold transition tab-active";
+      }
+    };
+
+    // Sélection du rôle
+    window.selectRole = function(role) {
+      // Reset tous les boutons
+      ['apprenant', 'formateur', 'recruteur'].forEach(r => {
+        const btn = document.getElementById(`role-${r}`);
+        btn.className = "role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300";
+      });
+
+      // Activer le bouton sélectionné
+      const selectedBtn = document.getElementById(`role-${role}`);
+      selectedBtn.className = "role-btn px-3 py-2 border-2 border-primary-600 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium transition";
+
+      // Mettre à jour le champ caché
+      document.getElementById('register-role').value = role;
+
+      // Afficher/masquer champ organisation
+      const orgField = document.getElementById('field-organisation');
+      const orgInput = document.getElementById('register-organisation');
+      orgInput.required = role !== 'apprenant';
+      role === 'apprenant' ? orgField.classList.add('hidden') : orgField.classList.remove('hidden');
+
+      // Afficher/masquer les champs spécifiques au formateur
+      const champsFormateur = ['field-portfolio', 'field-preuves', 'field-adresse'];
+      champsFormateur.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) role === 'formateur' ? el.classList.remove('hidden') : el.classList.add('hidden');
+      });
+    };
+
+    // Gestion connexion
+    window.handleLogin = async function(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('login-error');
+      const btn = document.getElementById('btn-login');
+
+      errorDiv.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Connexion...</span>';
+
+      const result = await connecter({ email, motDePasse: password });
+
+      if (result.succes) {
+        showToast('Connexion réussie ! Redirection...');
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1000);
+      } else {
+        errorDiv.textContent = result.erreur;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = 'Se connecter';
+      }
+    };
+
+    // Gestion inscription
+    window.handleRegister = async function(event) {
+      event.preventDefault();
+      
+      const nom           = document.getElementById('register-nom').value;
+      const email         = document.getElementById('register-email').value;
+      const password      = document.getElementById('register-password').value;
+      const role          = document.getElementById('register-role').value;
+      const organisation  = document.getElementById('register-organisation').value;
+      // Champs formateur
+      const portfolioUrl  = document.getElementById('register-portfolio')?.value  || '';
+      const preuveSociale = document.getElementById('register-preuves')?.value    || '';
+      const adresseCentre = document.getElementById('register-adresse')?.value    || '';
+      const errorDiv      = document.getElementById('register-error');
+      const btn           = document.getElementById('btn-register');
+
+      errorDiv.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Création du compte...</span>';
+
+      const result = await inscrire({ 
+        nom, 
+        email, 
+        motDePasse: password, 
+        role, 
+        organisation: role === 'apprenant' ? '' : organisation,
+        portfolioUrl,
+        preuveSociale,
+        adresseCentre,
+      });
+
+      if (result.succes) {
+        if (role === 'formateur') {
+          // Rediriger vers la page d'attente
+          showToast('Compte créé ! Votre demande est en cours d’examen...');
+          setTimeout(() => {
+            window.location.href = 'pending.html';
+          }, 1500);
+        } else {
+          showToast('Compte créé avec succès ! Connexion...');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        }
+      } else {
+        errorDiv.textContent = result.erreur;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = 'Créer mon compte';
+      }
+    };
+
+    // Toast notification
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toast-message');
+      toastMessage.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // Observer l'état de connexion au chargement
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+
+      try {
+        const profil = await getProfil(user.uid);
+        console.log('User UID :', user.uid);
+        console.log('Profil récupéré :', profil);
+        if (!profil) {
+          console.warn('Profil introuvable, redirection par défaut');
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        // Formateur en attente → page pending
+        if (profil.role === 'formateur' && profil.statut === 'en_attente') {
+          window.location.href = 'pending.html';
+          return;
+        }
+
+        // Formateur refusé → page pending (avec message différent affiché là-bas)
+        if (profil.role === 'formateur' && profil.statut === 'refuse') {
+          window.location.href = 'pending.html';
+          return;
+        }
+
+        // Redirection selon le rôle
+        const routes = {
+          'formateur': 'formateur.html',
+          'apprenant': 'portfolio.html',
+          'recruteur': 'verify.html',
+          'admin':     'admin.html',
+        };
+        const destination = routes[profil.role];
+        if (destination) {
+          window.location.href = destination;
+        }
+        console.log('Redirection vers :', routes[profil.role]);
+
+      } catch (e) {
+        console.error("Erreur lors de la récupération du profil :", e);
+      }
+    });
+  </script>
+
+</body>
+</html>

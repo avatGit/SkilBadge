@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillBadge — Mon portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: "#eff6ff",
+              100: "#dbeafe",
+              500: "#3b82f6",
+              600: "#2563eb",
+              700: "#1d4ed8",
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="portfolio.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-x-hidden">
+
+  <!-- Chargement global -->
+  <div id="global-loading" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-950/90" role="status" aria-live="polite" aria-busy="true">
+    <div class="h-10 w-10 rounded-full border-2 border-primary-600 border-t-transparent animate-spin" aria-hidden="true"></div>
+    <p class="mt-4 text-slate-400 text-sm">Chargement de votre espace…</p>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toast-container" class="fixed top-20 right-4 z-[150] flex flex-col gap-2 max-w-sm pointer-events-none" aria-live="polite"></div>
+
+  <!-- Navbar fixe -->
+  <header class="fixed top-0 left-0 right-0 z-40 h-16 bg-[#0f172a] border-b border-slate-800 shadow-md flex items-center px-3 lg:px-6 gap-3">
+    <button type="button" id="btn-open-drawer" class="lg:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-600" aria-label="Ouvrir le menu de navigation" aria-controls="mobile-drawer" aria-expanded="false">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <a href="portfolio.html" class="flex items-center gap-2 shrink-0 font-bold text-white tracking-tight">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-sm">SB</span>
+      <span class="hidden sm:inline">SkillBadge</span>
+    </a>
+    <div class="flex-1 flex justify-center min-w-0 px-2">
+      <div class="flex items-center gap-2 max-w-full">
+        <div id="user-avatar" class="h-9 w-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-semibold text-white shrink-0" aria-hidden="true">?</div>
+        <p id="user-name" class="truncate text-sm text-slate-200 font-medium">—</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <span id="wallet-truncated" class="hidden sm:inline text-xs text-slate-400 font-mono max-w-[7rem] truncate" aria-live="polite"></span>
+      <button type="button" id="btn-wallet" class="btn-scale px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#0f172a]">
+        Connecter Wallet
+      </button>
+    </div>
+  </header>
+
+  <!-- Drawer mobile -->
+  <div id="mobile-drawer-backdrop" class="fixed inset-0 z-30 bg-black/50 lg:hidden hidden" aria-hidden="true"></div>
+  <aside id="mobile-drawer" class="fixed top-0 left-0 z-40 h-full w-64 bg-[#1e293b] border-r border-slate-700 transform -translate-x-full transition-transform lg:hidden flex flex-col pt-16" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+    <nav class="flex-1 p-2 space-y-1" aria-label="Navigation mobile">
+      <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800" data-page="dashboard" data-close-drawer="true">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>Tableau de bord</span>
+      </button>
+      <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800" data-page="badges" data-close-drawer="true">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+        <span>Mes badges</span>
+      </button>
+      <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800" data-page="demandes" data-close-drawer="true">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <span>Demandes</span>
+      </button>
+      <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800" data-page="historique" data-close-drawer="true">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Historique</span>
+      </button>
+      <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800" data-page="profil" data-close-drawer="true">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>Profil</span>
+      </button>
+    </nav>
+    <div class="p-2 border-t border-slate-700">
+      <button type="button" id="btn-logout-mobile" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-slate-800">Déconnexion</button>
+    </div>
+  </aside>
+
+  <div class="flex pt-16 min-h-screen">
+    <!-- Sidebar desktop -->
+    <aside id="sidebar" class="hidden lg:flex flex-col w-64 bg-[#1e293b] border-r border-slate-700 shrink-0 transition-[width] duration-200" aria-label="Navigation principale">
+      <div class="p-2 flex-1 space-y-1 mt-2">
+        <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 border-l-4 border-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600" data-page="dashboard" aria-current="page">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span class="sidebar-label">Tableau de bord</span>
+        </button>
+        <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 border-l-4 border-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600" data-page="badges">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          <span class="sidebar-label">Mes badges</span>
+        </button>
+        <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 border-l-4 border-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600" data-page="demandes">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span class="sidebar-label">Demandes</span>
+        </button>
+        <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 border-l-4 border-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600" data-page="historique">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="sidebar-label">Historique</span>
+        </button>
+        <button type="button" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 border-l-4 border-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600" data-page="profil">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span class="sidebar-label">Profil</span>
+        </button>
+      </div>
+      <div class="p-2 border-t border-slate-700 space-y-1">
+        <button type="button" id="btn-sidebar-collapse" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 text-sm" title="Réduire le menu" aria-pressed="false" aria-label="Réduire ou agrandir le menu latéral">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+          <span class="sidebar-label">Réduire</span>
+        </button>
+        <button type="button" id="btn-logout" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span class="sidebar-label">Déconnexion</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Contenu + panneau droit dashboard -->
+    <div class="flex-1 flex flex-col lg:flex-row min-w-0">
+      <main id="main-content" class="flex-1 overflow-y-auto p-4 lg:p-8 min-h-[calc(100vh-4rem)]">
+
+        <!-- Tableau de bord -->
+        <section id="page-dashboard" class="page-section max-w-6xl mx-auto" data-page-id="dashboard">
+          <h1 class="text-2xl font-bold text-white mb-6">Tableau de bord</h1>
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-5">
+              <p class="text-slate-400 text-sm">Badges obtenus</p>
+              <p id="stat-badges" class="text-3xl font-bold text-emerald-400 mt-1">0</p>
+            </div>
+            <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-5">
+              <p class="text-slate-400 text-sm">Niveau max atteint</p>
+              <p id="stat-niveau" class="text-xl font-semibold text-blue-400 mt-1">—</p>
+            </div>
+            <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-5">
+              <p class="text-slate-400 text-sm">Demandes en attente</p>
+              <p id="stat-demandes" class="text-3xl font-bold text-amber-400 mt-1">0</p>
+            </div>
+            <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-5">
+              <p class="text-slate-400 text-sm">Profil complété</p>
+              <p id="stat-profil" class="text-3xl font-bold text-violet-400 mt-1">0%</p>
+            </div>
+          </div>
+
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-white">Mes derniers badges</h2>
+                <span id="badge-count-label" class="text-sm text-slate-400">Mes badges NFT (0)</span>
+              </div>
+              <div id="grid-recent-badges" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4"></div>
+              <button type="button" id="btn-share-whatsapp" class="btn-scale mt-8 w-50 py-4 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-950">
+                Partager tout mon portfolio sur WhatsApp
+              </button>
+
+              <!-- Formulaire demande (mobile / tablette : sous le dashboard) -->
+              <div class="lg:hidden mt-10 rounded-2xl border border-slate-700 bg-slate-900/50 p-5">
+                <h2 class="text-lg font-semibold text-white mb-4">Demander une validation</h2>
+                <form id="form-demande-mobile" class="demande-form space-y-4" data-form-id="mobile">
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-email-mobile">E-mail</label>
+                    <input id="d-email-mobile" type="email" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" readonly />
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-comp-mobile">Compétence visée</label>
+                    <input id="d-comp-mobile" type="text" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Ex. React avancé" maxlength="200" />
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-domaine-mobile">Domaine</label>
+                    <select id="d-domaine-mobile" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-niveau-mobile">Niveau sollicité</label>
+                    <select id="d-niveau-mobile" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-formateur-mobile">Formateur / Institution</label>
+                    <select id="d-formateur-mobile" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-file-mobile">Preuve (fichier)</label>
+                    <div id="d-drop-mobile" class="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center text-slate-400 text-sm cursor-pointer hover:border-primary-600 hover:bg-slate-800/50 transition-colors" tabindex="0" role="button" aria-label="Zone de dépôt de fichier">Glissez un fichier ou cliquez pour parcourir</div>
+                    <input id="d-file-mobile" type="file" class="hidden" />
+                    <p id="d-file-name-mobile" class="text-xs text-slate-500 mt-1"></p>
+                  </div>
+                  <div>
+                    <label class="block text-sm text-slate-400 mb-1" for="d-msg-mobile">Message au formateur</label>
+                    <textarea id="d-msg-mobile" rows="3" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Contexte, liens…"></textarea>
+                  </div>
+                  <button type="submit" class="btn-scale w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold">Envoyer la demande</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mes badges -->
+        <section id="page-badges" class="page-section hidden max-w-6xl mx-auto" data-page-id="badges">
+          <h1 class="text-2xl font-bold text-white mb-6">Mes badges</h1>
+          <div class="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
+            <label class="sr-only" for="filter-domaine">Domaine</label>
+            <select id="filter-domaine" class="rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-600">
+              <option value="">Tous les domaines</option>
+            </select>
+            <label class="sr-only" for="filter-niveau">Niveau</label>
+            <select id="filter-niveau" class="rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-600">
+              <option value="">Tous les niveaux</option>
+            </select>
+            <label class="sr-only" for="filter-search">Recherche</label>
+            <input id="filter-search" type="search" placeholder="Rechercher…" class="flex-1 min-w-[12rem] rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-600" autocomplete="off" />
+          </div>
+          <div id="grid-all-badges" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- Demandes -->
+        <section id="page-demandes" class="page-section hidden max-w-6xl mx-auto" data-page-id="demandes">
+          <h1 class="text-2xl font-bold text-white mb-6">Demandes de validation</h1>
+          <div class="flex gap-2 mb-6 border-b border-slate-700" role="tablist">
+            <button type="button" id="tab-demandes-envoyees" class="tab-dem px-4 py-2 text-sm font-medium border-b-2 border-primary-600 text-primary-400" role="tab" aria-selected="true">Envoyées</button>
+            <button type="button" id="tab-demandes-nouvelle" class="tab-dem px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200" role="tab" aria-selected="false">Nouvelle demande</button>
+          </div>
+          <div id="panel-demandes-liste" role="tabpanel">
+            <ul id="liste-demandes" class="space-y-3"></ul>
+          </div>
+          <div id="panel-demandes-form" class="hidden max-w-lg" role="tabpanel">
+            <h2 class="text-lg font-semibold text-white mb-4">Nouvelle demande</h2>
+            <form id="form-demande-tab" class="demande-form space-y-4" data-form-id="tab">
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-email-tab">E-mail</label>
+                <input id="d-email-tab" type="email" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" readonly />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-comp-tab">Compétence visée</label>
+                <input id="d-comp-tab" type="text" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Ex. React avancé" maxlength="200" />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-domaine-tab">Domaine</label>
+                <select id="d-domaine-tab" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-niveau-tab">Niveau sollicité</label>
+                <select id="d-niveau-tab" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-formateur-tab">Formateur / Institution</label>
+                <select id="d-formateur-tab" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-file-tab">Preuve (fichier)</label>
+                <div id="d-drop-tab" class="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center text-slate-400 text-sm cursor-pointer hover:border-primary-600 hover:bg-slate-800/50 transition-colors" tabindex="0" role="button" aria-label="Zone de dépôt de fichier">Glissez un fichier ou cliquez pour parcourir</div>
+                <input id="d-file-tab" type="file" class="hidden" />
+                <p id="d-file-name-tab" class="text-xs text-slate-500 mt-1"></p>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-400 mb-1" for="d-msg-tab">Message au formateur</label>
+                <textarea id="d-msg-tab" rows="3" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Contexte, liens…"></textarea>
+              </div>
+              <button type="submit" class="btn-scale w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold">Envoyer la demande</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Historique -->
+        <section id="page-historique" class="page-section hidden max-w-3xl mx-auto" data-page-id="historique">
+          <h1 class="text-2xl font-bold text-white mb-6">Historique</h1>
+          <div class="flex flex-wrap gap-3 mb-6">
+            <label class="text-sm text-slate-400" for="hist-date-de">Du</label>
+            <input type="date" id="hist-date-de" class="rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-2 py-1 text-sm" />
+            <label class="text-sm text-slate-400" for="hist-date-a">Au</label>
+            <input type="date" id="hist-date-a" class="rounded-lg bg-slate-800 border border-slate-600 text-slate-200 px-2 py-1 text-sm" />
+            <button type="button" id="btn-hist-reset" class="text-sm text-primary-400 hover:underline">Réinitialiser</button>
+          </div>
+          <div id="timeline-historique" class="timeline text-slate-300 text-sm"></div>
+        </section>
+
+        <!-- Profil -->
+        <section id="page-profil" class="page-section hidden max-w-4xl mx-auto" data-page-id="profil">
+          <h1 class="text-2xl font-bold text-white mb-6">Profil</h1>
+          <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Informations personnelles</h2>
+            <form id="form-profil" class="space-y-4 max-w-md">
+              <div>
+                <label for="profil-nom" class="block text-sm text-slate-400 mb-1">Nom complet</label>
+                <input id="profil-nom" name="nom" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-slate-100 focus:ring-2 focus:ring-primary-600" />
+              </div>
+              <div>
+                <label for="profil-email" class="block text-sm text-slate-400 mb-1">E-mail</label>
+                <input id="profil-email" type="email" disabled class="w-full rounded-lg bg-slate-900/50 border border-slate-700 px-3 py-2 text-slate-500 cursor-not-allowed" title="L’e-mail ne peut pas être modifié ici" />
+              </div>
+              <div>
+                <label for="profil-org" class="block text-sm text-slate-400 mb-1">Organisation</label>
+                <input id="profil-org" name="organisation" type="text" class="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-slate-100 focus:ring-2 focus:ring-primary-600" />
+              </div>
+              <button type="submit" class="btn-scale px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium">Enregistrer</button>
+            </form>
+          </div>
+          <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Wallet blockchain</h2>
+            <p id="profil-wallet-address" class="font-mono text-sm text-slate-300 break-all mb-2">—</p>
+            <p id="profil-wallet-status" class="text-sm text-amber-400 mb-4">Non connecté</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btn-profil-wallet" class="btn-scale px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium">Connecter MetaMask</button>
+              <button type="button" id="btn-profil-wallet-disconnect" class="btn-scale px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-700 text-sm hidden">Déconnecter (profil)</button>
+            </div>
+            <p class="text-xs text-slate-500 mt-3">La déconnexion MetaMask ne retire pas l’adresse enregistrée sur le serveur ; utilisez une nouvelle connexion pour la mettre à jour.</p>
+          </div>
+          <div class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 p-6">
+            <h2 class="text-lg font-semibold text-white mb-4">Répartition par domaine</h2>
+            <div id="chart-domaines" class="space-y-3"></div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Panneau droit : formulaire demande (dashboard + desktop) -->
+    <!--  <aside id="dash-right-panel" class="hidden lg:block w-full lg:w-96 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-800 bg-[#0f172a] p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <h2 class="text-lg font-semibold text-white mb-4">Demander une validation</h2>
+        <form id="form-demande-dashboard" class="demande-form space-y-4" data-form-id="dashboard">
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-email-dashboard">E-mail</label>
+            <input id="d-email-dashboard" type="email" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" readonly />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-comp-dashboard">Compétence visée</label>
+            <input id="d-comp-dashboard" type="text" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Ex. React avancé" maxlength="200" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-domaine-dashboard">Domaine</label>
+            <select id="d-domaine-dashboard" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-niveau-dashboard">Niveau sollicité</label>
+            <select id="d-niveau-dashboard" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-formateur-dashboard">Formateur / Institution</label>
+            <select id="d-formateur-dashboard" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-file-dashboard">Preuve (fichier)</label>
+            <div id="d-drop-dashboard" class="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center text-slate-400 text-sm cursor-pointer hover:border-primary-600 hover:bg-slate-800/50 transition-colors" tabindex="0" role="button" aria-label="Zone de dépôt de fichier">
+              Glissez un fichier ou cliquez pour parcourir
+            </div>
+            <input id="d-file-dashboard" type="file" class="hidden" />
+            <p id="d-file-name-dashboard" class="text-xs text-slate-500 mt-1"></p>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-400 mb-1" for="d-msg-dashboard">Message au formateur</label>
+            <textarea id="d-msg-dashboard" rows="3" class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-slate-200 text-sm" placeholder="Contexte, liens…"></textarea>
+          </div>
+          <button type="submit" class="btn-scale w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold">Envoyer la demande</button>
+        </form>
+      </aside>
+    </div>
+  </div>
+-->
+  <!-- Modale détail badge -->
+  <dialog id="badge-modal" class="rounded-2xl bg-slate-900 text-slate-100 p-0 max-w-lg w-[calc(100%-2rem)] border border-slate-700 shadow-xl backdrop:bg-black/60" aria-labelledby="modal-badge-title">
+    <div id="badge-modal-print" class="p-6">
+      <div class="flex gap-4 mb-4">
+        <div id="modal-hex" class="hex-badge hex-badge-lg" aria-hidden="true"></div>
+        <div>
+          <h2 id="modal-badge-title" class="text-xl font-bold text-white">—</h2>
+          <p id="modal-domaine" class="text-slate-400 text-sm">—</p>
+          <span id="modal-niveau-pill" class="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full">—</span>
+        </div>
+      </div>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between gap-4"><dt class="text-slate-500">Émetteur</dt><dd id="modal-emetteur" class="text-slate-200 text-right">—</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500">Date d’émission</dt><dd id="modal-date-emit" class="text-slate-200">—</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500">Validité</dt><dd id="modal-validite" class="text-slate-200">—</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500">Score</dt><dd id="modal-score" class="text-slate-200">—</dd></div>
+        <div class="pt-2 border-t border-slate-700">
+          <dt class="text-slate-500 mb-1">Preuve blockchain</dt>
+          <dd>
+            <code id="modal-tx" class="text-xs break-all text-slate-300">—</code>
+            <div class="mt-2 flex flex-wrap gap-2 items-center">
+              <a id="modal-polygonscan" href="#" target="_blank" rel="noopener noreferrer" class="text-primary-400 text-sm hover:underline">Polygonscan</a>
+              <span id="modal-onchain-badge" class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400 hidden">Vérifié on-chain</span>
+            </div>
+          </dd>
+        </div>
+      </dl>
+      <div class="mt-6 flex flex-wrap gap-2">
+        <button type="button" id="modal-btn-share" class="btn-scale px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium">Partager</button>
+        <button type="button" id="modal-btn-pdf" class="btn-scale px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 text-sm">Télécharger PDF</button>
+        <button type="button" id="modal-btn-close" class="btn-scale px-4 py-2 rounded-lg text-slate-400 hover:text-white text-sm ml-auto">Fermer</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/portfolio.js"></script>
+</body>
+</html>
