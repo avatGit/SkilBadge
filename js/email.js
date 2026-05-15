@@ -5,9 +5,9 @@
 
 // ⚠️ CONFIGURATION EMAILJS — À remplacer après inscription sur emailjs.com
 const EMAILJS_CONFIG = {
-  publicKey:  "VOTRE_PUBLIC_KEY",   // Settings → API Keys → Public Key
-  serviceId:  "VOTRE_SERVICE_ID",   // Email Services → Service ID
-  templateId: "VOTRE_TEMPLATE_ID",  // Email Templates → Template ID
+  publicKey: "5lnu-utidZnXwQfgP",   // Settings → API Keys → Public Key
+  serviceId: "service_rqxzvqh",   // Email Services → Service ID
+  templateId: "template_198uxed",  // Email Templates → Template ID
 };
 
 let emailjsInitialized = false;
@@ -45,9 +45,9 @@ export async function envoyerEmailApprobation({ toEmail, nom, statut, raison = "
 
   const templateParams = {
     to_email: toEmail,
-    to_name:  nom,
-    statut:   estApprouve ? "approuvée ✅" : "refusée ❌",
-    message:  estApprouve
+    to_name: nom,
+    statut: estApprouve ? "approuvée ✅" : "refusée ❌",
+    message: estApprouve
       ? "Votre compte formateur SkillBadge est maintenant actif. Vous pouvez vous connecter et commencer à émettre des badges certifiés sur la blockchain."
       : `Votre demande de compte formateur a été refusée.${raison ? ` Raison : ${raison}` : ""} Contactez l'administrateur pour plus d'informations.`,
     app_url: window.location.origin,
@@ -80,9 +80,9 @@ export async function envoyerEmailInscription({ toEmail, nom }) {
 
   const templateParams = {
     to_email: toEmail,
-    to_name:  nom,
-    statut:   "reçue 📬",
-    message:  "Votre demande d'inscription comme formateur sur SkillBadge a bien été reçue. Un administrateur examinera votre dossier sous 24–48h. Vous recevrez un email dès la décision prise.",
+    to_name: nom,
+    statut: "reçue 📬",
+    message: "Votre demande d'inscription comme formateur sur SkillBadge a bien été reçue. Un administrateur examinera votre dossier sous 24–48h. Vous recevrez un email dès la décision prise.",
     app_url: window.location.origin,
   };
 

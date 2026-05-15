@@ -261,50 +261,83 @@ function mettreAJourStats() {
 
 // ── Rendu badges (cartes) ──────────────────────────────────
 
-function carteBadgeHtml(badge, { compact = false } = {}) {
+function carteBadgeHtml(badge) {
   const pill = couleurNiveau(badge.niveau);
-  const domBg = couleurDomaine(badge.domaine) || "#334155";
   const dateStr = formaterDate(badge.dateEmission);
-  const cls = compact
-    ? "p-4 flex flex-col gap-3"
-    : "p-5 flex flex-col gap-3";
+  const scanUrl = badge.txHash ? `https://amoy.polygonscan.com/tx/${badge.txHash}` : "#";
+  const isOnChain = badge.blockchainUsed === true;
+
   return `
-    <article class="rounded-2xl shadow-lg bg-slate-800 border border-slate-700 ${cls} badge-card cursor-pointer hover:border-primary-600/50 transition-colors" data-badge-id="${escapeAttr(badge.id)}" tabindex="0" role="button" aria-label="Détails du badge ${escapeAttr(badge.nom)}">
-      <div class="flex items-start gap-3">
-        <div class="hex-badge" style="--hex-bg:${escapeAttr(domBg)}" aria-hidden="true"></div>
-        <div class="min-w-0 flex-1">
-          <h3 class="font-semibold text-white truncate">${escapeAttr(badge.nom)}</h3>
-          <p class="text-xs text-slate-400 truncate">${escapeAttr(badge.domaine || "")}</p>
-          <span class="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full" style="background:${pill.bg};color:${pill.color}">${escapeAttr(badge.niveau || "")}</span>
+    <div class="badge-card bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-blue-500/50 transition relative group flex flex-col h-full cursor-pointer" data-badge-id="${escapeAttr(badge.id)}">
+      <!-- En-tête Badge -->
+      <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 bg-blue-900/50 rounded-lg flex items-center justify-center text-xl text-blue-400">
+          🏆
+        </div>
+        ${isOnChain ? `
+          <span class="px-2 py-1 bg-emerald-900/30 text-emerald-400 text-[10px] font-bold rounded border border-emerald-800">
+            ✅ VÉRIFIÉ ON-CHAIN
+          </span>
+        ` : `
+          <span class="px-2 py-1 bg-amber-900/30 text-amber-400 text-[10px] font-bold rounded border border-amber-800">
+            ⚠️ SIMULATION
+          </span>
+        `}
+      </div>
+
+      <!-- Infos -->
+      <h3 class="font-bold text-white text-lg leading-tight mb-1 truncate" title="${escapeAttr(badge.nom)}">${escapeAttr(badge.nom)}</h3>
+      <p class="text-slate-400 text-xs mb-4">${escapeAttr(badge.domaine)}</p>
+
+      <!-- Détails Grid -->
+      <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 mb-4 mt-auto">
+        <div>
+          <span class="text-slate-500 block">Niveau</span>
+          <span class="font-medium text-blue-300">${escapeAttr(badge.niveau)}</span>
+        </div>
+        <div>
+          <span class="text-slate-500 block">Émis par</span>
+          <span class="font-medium truncate block" title="${escapeAttr(badge.formateurNom)}">${escapeAttr(badge.formateurNom)}</span>
         </div>
       </div>
-      <p class="text-xs text-slate-500">${dateStr}</p>
-      <button type="button" class="btn-partager-badge btn-scale w-full py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-medium" data-badge-id="${escapeAttr(badge.id)}">Partager</button>
-    </article>`;
+
+      <!-- Footer / Lien Blockchain -->
+      <div class="pt-3 border-t border-slate-700 flex justify-between items-center">
+        <span class="text-[10px] text-slate-500">${dateStr}</span>
+        ${isOnChain ? `
+          <a href="${scanUrl}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 relative z-10">
+            Explorer ↗
+          </a>
+        ` : `
+          <span class="text-[10px] text-slate-600 italic">Off-chain</span>
+        `}
+      </div>
+    </div>`;
 }
+
+// Helper global pour ouvrir la modale
+window.ouvrirModalBadgeById = (id) => {
+  const b = badgesData.find(x => x.id === id);
+  if (b) ouvrirModalBadge(b);
+};
 
 function bindBadgeCardClicks(container) {
   if (!container) return;
   container.querySelectorAll(".badge-card").forEach((card) => {
     card.addEventListener("click", (e) => {
-      if (e.target.closest(".btn-partager-badge")) return;
+      // Ne pas ouvrir la modale si on clique sur un lien ou un bouton spécifique
+      if (e.target.closest("a") || e.target.closest(".btn-partager-badge")) return;
+
       const id = card.getAttribute("data-badge-id");
       const b = badgesData.find((x) => x.id === id);
       if (b) ouvrirModalBadge(b);
     });
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
+        if (e.target.closest("a")) return;
         e.preventDefault();
         card.click();
       }
-    });
-  });
-  container.querySelectorAll(".btn-partager-badge").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute("data-badge-id");
-      const b = badgesData.find((x) => x.id === id);
-      if (b) partagerBadge(b);
     });
   });
 }
@@ -906,7 +939,7 @@ function cleanupListeners() {
   unsubscribers.forEach((u) => {
     try {
       if (typeof u === "function") u();
-    } catch (_) {}
+    } catch (_) { }
   });
   unsubscribers = [];
 }
@@ -1047,12 +1080,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const unsubB = ecouterBadgesApprenant(user.uid, (list) => {
+        console.log(`📦 Badges listener: ${list.length} badges reçus pour UID ${user.uid}`);
         badgesData = list;
         onDataChanged();
       });
       unsubscribers.push(unsubB);
 
       const unsubD = ecouterDemandesApprenant(user.uid, (list) => {
+        console.log(`🔔 Demandes listener: ${list.length} demandes reçues pour UID ${user.uid}`);
         demandesData = list;
         onDataChanged();
       });

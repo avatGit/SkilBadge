@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 import { db } from "./firebase.js";
-import { genererHashNFT, genererBlocNumber, getProfil } from "./auth.js";
+import { getProfil } from "./auth.js";
 import { connectWallet, mintBadgeOnChain } from "./web3.js";
 import { uploadMetadataToIPFS, uploadImageToIPFS, getIPFSUri } from "./ipfs.js";
 // ─────────────────────────────────────────────────────────
@@ -121,6 +121,18 @@ export async function attribuerBadge({
       };
     }
 
+    // 2. Vérifier que MetaMask est connecté et correspond au wallet du profil
+    const connectedWallet = await connectWallet();
+    if (!connectedWallet) {
+      return { succes: false, erreur: "Veuillez connecter votre wallet MetaMask pour émettre un badge." };
+    }
+    if (connectedWallet.toLowerCase() !== formateurProfil.wallet.toLowerCase()) {
+      return {
+        succes: false,
+        erreur: `Wallet mismatch : Connectez MetaMask avec l'adresse ${formateurProfil.wallet.slice(0, 6)}...`
+      };
+    }
+
     const formateurWallet = formateurProfil.wallet;
 
     // 2. Calculer la date d'expiration
@@ -148,53 +160,53 @@ export async function attribuerBadge({
 
     const badgeImages = {
       "Développement Web": {
-        Débutant:       "web-debutant.png",
-        Intermédiaire:  "web-intermediaire.png",
-        Avancé:         "web-avance.png",
-        Expert:         "web-expert.png",
+        Débutant: "web-debutant.png",
+        Intermédiaire: "web-intermediaire.png",
+        Avancé: "web-avance.png",
+        Expert: "web-expert.png",
       },
       "Développement Mobile": {
-        Débutant:       "mobile-debutant.png",
-        Intermédiaire:  "mobile-intermediaire.png",
-        Avancé:         "mobile-avance.png",
-        Expert:         "mobile-expert.png",
+        Débutant: "mobile-debutant.png",
+        Intermédiaire: "mobile-intermediaire.png",
+        Avancé: "mobile-avance.png",
+        Expert: "mobile-expert.png",
       },
       "Data & IA": {
-        Débutant:       "data-debutant.png",
-        Intermédiaire:  "data-intermediaire.png",
-        Avancé:         "data-avance.png",
-        Expert:         "data-expert.png",
+        Débutant: "data-debutant.png",
+        Intermédiaire: "data-intermediaire.png",
+        Avancé: "data-avance.png",
+        Expert: "data-expert.png",
       },
       "Cybersécurité": {
-        Débutant:       "cyber-debutant.png",
-        Intermédiaire:  "cyber-intermediaire.png",
-        Avancé:         "cyber-avance.png",
-        Expert:         "cyber-expert.png",
+        Débutant: "cyber-debutant.png",
+        Intermédiaire: "cyber-intermediaire.png",
+        Avancé: "cyber-avance.png",
+        Expert: "cyber-expert.png",
       },
       "UI/UX Design": {
-        Débutant:       "design-debutant.png",
-        Intermédiaire:  "design-intermediaire.png",
-        Avancé:         "design-avance.png",
-        Expert:         "design-expert.png",
+        Débutant: "design-debutant.png",
+        Intermédiaire: "design-intermediaire.png",
+        Avancé: "design-avance.png",
+        Expert: "design-expert.png",
       },
       "DevOps": {
-        Débutant:       "devops-debutant.png",
-        Intermédiaire:  "devops-intermediaire.png",
-        Avancé:         "devops-avance.png",
-        Expert:         "devops-expert.png",
+        Débutant: "devops-debutant.png",
+        Intermédiaire: "devops-intermediaire.png",
+        Avancé: "devops-avance.png",
+        Expert: "devops-expert.png",
       },
       // Domaines sans images dédiées → réutilise web / design
       "Blockchain": {
-        Débutant:       "web-debutant.png",
-        Intermédiaire:  "web-intermediaire.png",
-        Avancé:         "web-avance.png",
-        Expert:         "web-expert.png",
+        Débutant: "web-debutant.png",
+        Intermédiaire: "web-intermediaire.png",
+        Avancé: "web-avance.png",
+        Expert: "web-expert.png",
       },
       "Marketing Digital": {
-        Débutant:       "design-debutant.png",
-        Intermédiaire:  "design-intermediaire.png",
-        Avancé:         "design-avance.png",
-        Expert:         "design-expert.png",
+        Débutant: "design-debutant.png",
+        Intermédiaire: "design-intermediaire.png",
+        Avancé: "design-avance.png",
+        Expert: "design-expert.png",
       },
     };
 
@@ -219,10 +231,10 @@ export async function attribuerBadge({
       ],
     };
 
-    // 5. Upload sur IPFS (avec fallback si échec)
+    // 5. Upload sur IPFS (BLOQUANT en Phase 3)
     let ipfsCID = "";
     let ipfsURI = "";
-    
+
     try {
       // a) Upload de l'image sur IPFS
       const response = await fetch(imageUri);
@@ -238,35 +250,33 @@ export async function attribuerBadge({
       // c) Upload des métadonnées JSON sur IPFS
       ipfsCID = await uploadMetadataToIPFS(metadata);
       ipfsURI = getIPFSUri(ipfsCID);
-      
-      console.log("✅ Badge prêt pour mint:", ipfsURI);
+
+      console.log("✅ IPFS prêt:", ipfsURI);
     } catch (ipfsError) {
-      console.warn("⚠️ IPFS échoué, fallback vers URI local:", ipfsError);
-      ipfsURI = `https://skillbadge.vercel.app/api/badge/${typeId}`;
+      console.error("❌ Échec IPFS (requis en Phase 3):", ipfsError);
+      return { succes: false, erreur: "Impossible de stocker les métadonnées sur IPFS. Émission annulée." };
     }
 
-    // 5. Mint sur la blockchain
-    let blockchainResult = { success: false, txHash: null, blocNumber: null };
-    
+    // 6. Mint sur la blockchain (BLOQUANT en Phase 3)
+    let blockchainResult;
+
     try {
-      const connectedWallet = await connectWallet();
-      
-      if (connectedWallet && connectedWallet.toLowerCase() === formateurWallet.toLowerCase()) {
-        blockchainResult = await mintBadgeOnChain(
-          apprenantWallet,
-          BigInt(badgeId),
-          ipfsURI  // ← Maintenant contient l'URI IPFS réel !
-        );
-        
-        if (blockchainResult.success) {
-          console.log("✅ Blockchain:", blockchainResult.txHash);
-        }
+      blockchainResult = await mintBadgeOnChain(
+        apprenantWallet.toLowerCase(),
+        BigInt(badgeId),
+        ipfsURI
+      );
+
+      if (!blockchainResult.success) {
+        return { succes: false, erreur: `Échec du mint blockchain : ${blockchainResult.error}` };
       }
+      console.log("✅ Mint réussi :", blockchainResult.txHash);
     } catch (blockchainError) {
-      console.warn("⚠️ Erreur blockchain (fallback):", blockchainError);
+      console.error("❌ Erreur Blockchain:", blockchainError);
+      return { succes: false, erreur: "Erreur lors de la transaction blockchain. Émission annulée." };
     }
 
-    // 7. Enregistrer dans Firebase (TOUJOURS fait, même si blockchain échoue)
+    // 7. Enregistrer dans Firebase (SEULEMENT si succès blockchain)
     const nouveauRef = push(ref(db, "badges"));
     await set(nouveauRef, {
       typeId,
@@ -275,7 +285,7 @@ export async function attribuerBadge({
       niveau,
       apprenantId,
       apprenantNom,
-      apprenantWallet,
+      apprenantWallet: apprenantWallet.toLowerCase(),
       apprenantEmail,
       formateurId,
       formateurNom,
@@ -286,13 +296,12 @@ export async function attribuerBadge({
       dateExpiration,
       statut: "actif",
 
-      // Données blockchain RÉELLES (ou fallback mock)
-      nftHash: blockchainResult.txHash || genererHashNFT(),
-      blocNumber: blockchainResult.blocNumber || genererBlocNumber(),
-      txHash: blockchainResult.txHash || genererHashNFT(),
-      ipfsCID: ipfsCID || "",
-      ipfsURI: ipfsURI || "",
-      blockchainUsed: blockchainResult.success, // Pour savoir si c'était réel ou mock
+      // Données blockchain RÉELLES (OBLIGATOIRES)
+      txHash: blockchainResult.txHash,
+      blocNumber: blockchainResult.blocNumber,
+      ipfsCID,
+      ipfsURI,
+      blockchainUsed: true
     });
 
     return {
@@ -308,17 +317,32 @@ export async function attribuerBadge({
 }
 
 // ─────────────────────────────────────────────────────────
-//  RÉCUPÉRER LES BADGES D'UN APPRENANT (une seule fois)
+//  RÉCUPÉRER LES BADGES D'UN APPRENANT (La source de vérité)
 // ─────────────────────────────────────────────────────────
 export async function getBadgesApprenant(apprenantId) {
+  // DEBUG : Toujours logger ce qu'on cherche et ce qu'on trouve
+  console.log("🔍 [Badges.js] Recherche pour ID:", apprenantId);
+
   const snapshot = await get(ref(db, "badges"));
-  if (!snapshot.exists()) return [];
+  if (!snapshot.exists()) {
+    console.log("⚠️ [Badges.js] Collection vide");
+    return [];
+  }
 
   const tous = snapshot.val();
-  return Object.entries(tous)
-    .filter(([, v]) => v.apprenantId === apprenantId)
+
+  // Filtre STRICT sur l'ID de l'utilisateur
+  const badges = Object.entries(tous)
+    .filter(([id, v]) => {
+      const match = v.apprenantId === apprenantId;
+      if (match) console.log("✅ [Badges.js] Badge trouvé:", v.nom);
+      return match;
+    })
     .map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => b.dateEmission - a.dateEmission);
+
+  console.log(`📦 [Badges.js] Total retourné: ${badges.length}`);
+  return badges;
 }
 
 // ─────────────────────────────────────────────────────────

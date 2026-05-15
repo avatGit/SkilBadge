@@ -27,7 +27,7 @@ export async function envoyerDemande({
     const payload = {
       apprenantId, apprenantNom, apprenantEmail, apprenantWallet,
       formateurId, domaine, niveau, message,
-      statut   : "en_attente",
+      statut: "en_attente",
       createdAt: Date.now()
     };
     if (competence) payload.competence = competence;
@@ -60,15 +60,30 @@ export async function getDemandesFormateur(formateurId) {
 //  ÉCOUTER EN TEMPS RÉEL les demandes d'un formateur
 // ─────────────────────────────────────────────────────────
 export function ecouterDemandesFormateur(formateurId, callback) {
-  return onValue(ref(db, "demandes_validation"), (snapshot) => {
-    if (!snapshot.exists()) { callback([]); return; }
+  if (!formateurId) {
+    console.warn("⚠️ ecouterDemandesFormateur: formateurId manquant");
+    return () => { };
+  }
+
+  console.log("🔔 Écoute demandes pour formateur:", formateurId);
+  const demandesRef = ref(db, "demandes_validation");
+
+  return onValue(demandesRef, (snapshot) => {
+    if (!snapshot.exists()) {
+      console.log("📭 Aucune demande en DB (demandes_validation)");
+      callback([]);
+      return;
+    }
+
     const toutes = snapshot.val();
-    const demandes = Object.entries(toutes)
+    const filtrées = Object.entries(toutes)
       .filter(([, v]) => v.formateurId === formateurId)
       .map(([id, v]) => ({ id, ...v }))
       .sort((a, b) => b.createdAt - a.createdAt);
-    callback(demandes);
-  });
+
+    console.log(`✅ Demandes filtrées pour ${formateurId}:`, filtrées.length);
+    callback(filtrées);
+  }, { onlyOnce: false });
 }
 
 // ─────────────────────────────────────────────────────────

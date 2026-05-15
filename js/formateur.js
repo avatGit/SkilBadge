@@ -31,52 +31,52 @@ import {
 // ── Mapping domaine/niveau → nom de fichier image badge ───
 const BADGE_IMAGES = {
   "Développement Web": {
-    "Débutant":      "web-debutant.png",
+    "Débutant": "web-debutant.png",
     "Intermédiaire": "web-intermediaire.png",
-    "Avancé":        "web-avance.png",
-    "Expert":        "web-expert.png",
+    "Avancé": "web-avance.png",
+    "Expert": "web-expert.png",
   },
   "Développement Mobile": {
-    "Débutant":      "mobile-debutant.png",
+    "Débutant": "mobile-debutant.png",
     "Intermédiaire": "mobile-intermediaire.png",
-    "Avancé":        "mobile-avance.png",
-    "Expert":        "mobile-expert.png",
+    "Avancé": "mobile-avance.png",
+    "Expert": "mobile-expert.png",
   },
   "Data & IA": {
-    "Débutant":      "data-debutant.png",
+    "Débutant": "data-debutant.png",
     "Intermédiaire": "data-intermediaire.png",
-    "Avancé":        "data-avance.png",
-    "Expert":        "data-expert.png",
+    "Avancé": "data-avance.png",
+    "Expert": "data-expert.png",
   },
   "Cybersécurité": {
-    "Débutant":      "cyber-debutant.png",
+    "Débutant": "cyber-debutant.png",
     "Intermédiaire": "cyber-intermediaire.png",
-    "Avancé":        "cyber-avance.png",
-    "Expert":        "cyber-expert.png",
+    "Avancé": "cyber-avance.png",
+    "Expert": "cyber-expert.png",
   },
   "UI/UX Design": {
-    "Débutant":      "design-debutant.png",
+    "Débutant": "design-debutant.png",
     "Intermédiaire": "design-intermediaire.png",
-    "Avancé":        "design-avance.png",
-    "Expert":        "design-expert.png",
+    "Avancé": "design-avance.png",
+    "Expert": "design-expert.png",
   },
   "DevOps": {
-    "Débutant":      "devops-debutant.png",
+    "Débutant": "devops-debutant.png",
     "Intermédiaire": "devops-intermediaire.png",
-    "Avancé":        "devops-avance.png",
-    "Expert":        "devops-expert.png",
+    "Avancé": "devops-avance.png",
+    "Expert": "devops-expert.png",
   },
   "Blockchain": {
-    "Débutant":      "web-debutant.png",
+    "Débutant": "web-debutant.png",
     "Intermédiaire": "web-intermediaire.png",
-    "Avancé":        "web-avance.png",
-    "Expert":        "web-expert.png",
+    "Avancé": "web-avance.png",
+    "Expert": "web-expert.png",
   },
   "Marketing Digital": {
-    "Débutant":      "design-debutant.png",
+    "Débutant": "design-debutant.png",
     "Intermédiaire": "design-intermediaire.png",
-    "Avancé":        "design-avance.png",
-    "Expert":        "design-expert.png",
+    "Avancé": "design-avance.png",
+    "Expert": "design-expert.png",
   },
 };
 
@@ -95,6 +95,7 @@ let currentFormateur = null;
 let badgeTypeCreated = null;
 let selectedApprenant = null;
 let unsubDemandes = null;
+let currentDemandes = []; // Stockage local des demandes filtrées
 
 // ── UI : toast ─────────────────────────────────────────────
 function toast(msg, type = "info") {
@@ -574,95 +575,186 @@ window.chargerHistorique = async function () {
   }
 };
 
-// ── Demandes temps réel ─────────────────────────────────────
-function majCompteurDemandes(demandes) {
-  const n = demandes.filter((d) => d.statut === "en_attente").length;
-  const desk = document.getElementById("dem-count");
-  const mob = document.getElementById("dem-count-mobile");
-  [desk, mob].forEach((el) => {
-    if (!el) return;
-    if (n > 0) {
-      el.textContent = String(n);
-      el.classList.remove("hidden");
-    } else {
-      el.textContent = "";
-      el.classList.add("hidden");
-    }
-  });
+// ── Demandes temps réel (Version Phase 3 Hardening) ───────────
+function getNiveauColor(niveau) {
+  const map = {
+    "Débutant": "emerald",
+    "Intermédiaire": "blue",
+    "Avancé": "amber",
+    "Expert": "purple"
+  };
+  return map[niveau] || "slate";
 }
 
-function ecouterDemandes() {
-  if (!currentFormateur) return;
+/**
+ * Vérifie si le formateur peut émettre (MetaMask + Whitelist)
+ * Utilisé avant de traiter une demande.
+ */
+async function checkWalletEmissionEligible() {
+  if (!currentFormateur?.wallet) {
+    return { ok: false, reason: "Aucun wallet lié à votre compte." };
+  }
+
+  try {
+    const { checkFormateurWhitelisted } = await import("./web3.js");
+    const eth = window.ethereum;
+    if (!eth) return { ok: false, reason: "MetaMask non détecté." };
+
+    const accounts = await eth.request({ method: "eth_accounts" });
+    const connected = accounts[0];
+
+    if (!connected) return { ok: false, reason: "MetaMask non connecté." };
+    if (connected.toLowerCase() !== currentFormateur.wallet.toLowerCase()) {
+      return { ok: false, reason: `Mauvais compte MetaMask. Connectez ${currentFormateur.wallet.slice(0, 6)}...` };
+    }
+
+    const whitelisted = await checkFormateurWhitelisted(connected);
+    if (!whitelisted) return { ok: false, reason: "Votre wallet n'est pas encore whitelisté sur le contrat." };
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: "Erreur technique lors de la vérification web3." };
+  }
+}
+
+function chargerDemandes() {
+  if (!currentFormateur?.uid) return;
+
+  const tbody = document.getElementById("demandes-tbody");
+  const countBadge = document.getElementById("demandes-count");
+  const emptyMsg = document.getElementById("demandes-empty");
+
+  // Mobile count (si présent dans le HTML)
+  const mobCount = document.getElementById("dem-count-mobile");
+  const deskCount = document.getElementById("dem-count");
+
+  // Désabonnement si déjà actif
   if (typeof unsubDemandes === "function") {
-    try {
-      unsubDemandes();
-    } catch (_) {}
-    unsubDemandes = null;
+    unsubDemandes();
   }
 
   unsubDemandes = ecouterDemandesFormateur(currentFormateur.uid, (demandes) => {
-    majCompteurDemandes(demandes);
-    const tbody = document.getElementById("dem-tbody");
+    currentDemandes = demandes;
+
+    const nbEnAttente = demandes.filter(d => d.statut === "en_attente").length;
+    if (countBadge) countBadge.textContent = nbEnAttente;
+    if (deskCount) {
+      deskCount.textContent = nbEnAttente;
+      deskCount.classList.toggle("hidden", nbEnAttente === 0);
+    }
+    if (mobCount) {
+      mobCount.textContent = nbEnAttente;
+      mobCount.classList.toggle("hidden", nbEnAttente === 0);
+    }
+
     if (!tbody) return;
 
-    if (!demandes.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Aucune demande reçue.</td></tr>';
+    if (demandes.length === 0) {
+      tbody.innerHTML = "";
+      if (emptyMsg) emptyMsg.classList.remove("hidden");
       return;
     }
 
-    tbody.innerHTML = demandes
-      .map((d) => {
-        const st = d.statut || "";
-        const pill =
-          st === "en_attente"
-            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-            : st === "acceptée"
-            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-            : "bg-red-500/20 text-red-300 border border-red-500/40";
-        const actions =
-          st === "en_attente"
-            ? `<div class="flex flex-wrap gap-2">
-                 <button type="button" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition hover:scale-[1.02]" data-demande="${escapeHtml(d.id)}" data-action="acceptée">Accepter</button>
-                 <button type="button" class="rounded-lg border border-slate-500 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 transition hover:scale-[1.02]" data-demande="${escapeHtml(d.id)}" data-action="refusée">Refuser</button>
-               </div>`
-            : '<span class="text-slate-500">—</span>';
-        return `<tr class="border-b border-slate-700/80">
-          <td class="px-4 py-3">
-            <div class="font-medium text-slate-100">${escapeHtml(d.apprenantNom || "")}</div>
-            <div class="text-xs text-slate-500">${escapeHtml(d.apprenantEmail || "")}</div>
-            <div class="font-mono text-[10px] text-slate-600">${escapeHtml((d.apprenantWallet || "").slice(0, 10))}…</div>
-          </td>
-          <td class="px-4 py-3 text-slate-300">${escapeHtml(d.domaine || "")}</td>
-          <td class="px-4 py-3 text-slate-300">${escapeHtml(d.niveau || "")}</td>
-          <td class="px-4 py-3"><span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium ${pill}">${escapeHtml(st.replace("_", " "))}</span></td>
-          <td class="px-4 py-3">${actions}</td>
-        </tr>`;
-      })
-      .join("");
+    if (emptyMsg) emptyMsg.classList.add("hidden");
 
-    tbody.querySelectorAll("button[data-demande]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-demande");
-        const action = btn.getAttribute("data-action");
-        await traiterDemande(id, action);
-      });
-    });
+    tbody.innerHTML = demandes.map(d => {
+      const nivCol = getNiveauColor(d.niveau);
+      const isPending = d.statut === "en_attente";
+
+      return `
+        <tr class="border-b border-slate-700 hover:bg-slate-700/30 transition group" data-id="${d.id}">
+          <td class="px-4 py-3">
+            <div class="font-medium text-slate-100">${escapeHtml(d.apprenantNom)}</div>
+            <div class="text-[10px] text-slate-400">${escapeHtml(d.apprenantEmail)}</div>
+            <div class="text-[10px] font-mono text-slate-500 mt-1">${escapeHtml(d.apprenantWallet.slice(0, 8))}...${escapeHtml(d.apprenantWallet.slice(-6))}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-300">
+             <div class="text-sm font-medium">${escapeHtml(d.domaine)}</div>
+             ${d.competence ? `<div class="text-[10px] text-slate-500">${escapeHtml(d.competence)}</div>` : ""}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold" style="background:${nivCol === 'emerald' ? '#10b98120' : nivCol === 'blue' ? '#3b82f620' : nivCol === 'amber' ? '#f59e0b20' : '#a855f720'}; color:${nivCol === 'emerald' ? '#34d399' : nivCol === 'blue' ? '#60a5fa' : nivCol === 'amber' ? '#fbbf24' : '#c084fc'}">
+              ${escapeHtml(d.niveau)}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-[11px] text-slate-400 max-w-xs truncate" title="${escapeHtml(d.message || '')}">
+            ${escapeHtml(d.message || "—")}
+          </td>
+          <td class="px-4 py-3 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${d.statut === "en_attente" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+          d.statut === "acceptée" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+            "bg-red-500/10 text-red-400 border-red-500/20"
+        }">${escapeHtml(d.statut.replace("_", " "))}</span>
+          </td>
+          <td class="px-4 py-3 text-right">
+            ${isPending ? `
+              <div class="flex items-center justify-end gap-2">
+                <button onclick="accepterDemande('${d.id}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-emerald-600/10">✓ Émettre</button>
+                <button onclick="refuserDemande('${d.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-bold transition-all active:scale-95">✗</button>
+              </div>
+            ` : `<span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Traité</span>`}
+          </td>
+        </tr>
+      `;
+    }).join("");
   });
 }
 
-async function traiterDemande(demandeId, statut) {
-  try {
-    const res = await mettreAJourStatutDemande(demandeId, statut);
-    if (!res.succes) {
-      toast(res.erreur || "Mise à jour impossible.", "error");
-      return;
-    }
-    toast(statut === "acceptée" ? "Demande acceptée." : "Demande refusée.", "success");
-  } catch (e) {
-    toast(e.message || "Erreur.", "error");
+window.accepterDemande = async function (demandeId) {
+  const demande = currentDemandes.find(d => d.id === demandeId);
+  if (!demande) return;
+
+  // 1. Vérifier wallet & whitelist avant d'émettre
+  const walletStatus = await checkWalletEmissionEligible();
+  if (!walletStatus.ok) {
+    toast("⚠️ Éligibilité insuffisante : " + walletStatus.reason, "error");
+    return;
   }
-}
+
+  // 2. Pré-remplir le formulaire d'émission avec les données de la demande
+  const fDomaine = document.getElementById("f-domaine");
+  const fComp = document.getElementById("f-competence");
+  const fSearch = document.getElementById("search-apprenant");
+  const fScore = document.getElementById("a-score");
+
+  if (fDomaine) fDomaine.value = demande.domaine;
+  if (fComp) fComp.value = demande.competence || "";
+  if (fSearch) fSearch.value = demande.apprenantNom;
+  if (fScore) fScore.value = "85"; // Score par défaut
+
+  // Sélectionner le niveau (UI)
+  window.selNiveau(demande.niveau);
+
+  // Stocker l'apprenant sélectionné pour l'étape 2
+  selectedApprenant = {
+    uid: demande.apprenantId,
+    nom: demande.apprenantNom,
+    email: demande.apprenantEmail,
+    wallet: demande.apprenantWallet
+  };
+
+  // 3. Passer à l'étape 1 pour que le formateur puisse ajuster
+  showSection("sec-creer");
+  showStep(1);
+  window.mettreAJourApercu();
+
+  toast("Demande acceptée. Vérifiez les détails avant d'émettre.", "success");
+
+  // On ne marque "acceptée" dans Firebase QU'UNE FOIS le badge réellement émis ?
+  // Ou on le marque maintenant ? Dans le prompt, on suggère de le marquer maintenant ou après.
+  // Je vais le marquer "acceptée" tout de suite pour libérer la vue.
+  await mettreAJourStatutDemande(demandeId, "acceptée");
+};
+
+window.refuserDemande = async function (demandeId) {
+  if (!confirm("Voulez-vous vraiment refuser cette demande ?")) return;
+  const res = await mettreAJourStatutDemande(demandeId, "refusée");
+  if (res.succes) {
+    toast("Demande refusée.", "info");
+  } else {
+    toast("Erreur lors du refus.", "error");
+  }
+};
 
 // ── Modale simple ─────────────────────────────────────────
 window.fermerModal = function () {
@@ -670,6 +762,65 @@ window.fermerModal = function () {
   if (ov) ov.classList.add("hidden");
   if (ov) ov.classList.remove("flex");
 };
+
+// ── Éligibilité Blockchain (Phase 3) ──────────────────────
+/**
+ * Vérifie si le formateur peut émettre des badges :
+ * 1. Wallet lié dans Firebase
+ * 2. MetaMask connecté et correspondant
+ * 3. Whitelisté sur le contrat
+ */
+async function verifierEligibiliteEmission() {
+  if (!currentFormateur) return;
+
+  const banner = document.getElementById("banner-eligibilite");
+  const msg = document.getElementById("eligibilite-msg");
+  const btnE1 = document.getElementById("btn-etape1");
+  const btnE2 = document.getElementById("btn-etape2");
+
+  if (!banner || !msg) return;
+
+  let walletLie = currentFormateur.wallet;
+  let walletConnecte = null;
+  let estWhiteliste = false;
+
+  try {
+    const { checkFormateurWhitelisted } = await import("./web3.js");
+    const eth = window.ethereum;
+    if (eth) {
+      const accounts = await eth.request({ method: "eth_accounts" });
+      walletConnecte = accounts[0];
+
+      if (walletConnecte && walletLie && walletConnecte.toLowerCase() === walletLie.toLowerCase()) {
+        estWhiteliste = await checkFormateurWhitelisted(walletConnecte);
+      }
+    }
+  } catch (e) {
+    console.warn("Erreur verifierEligibiliteEmission:", e);
+  }
+
+  // Logique d'affichage
+  if (!walletLie) {
+    banner.classList.remove("hidden");
+    msg.textContent = "Action requise : Vous devez lier un wallet blockchain à votre profil.";
+    [btnE1, btnE2].forEach(b => { if (b) b.disabled = true; });
+  } else if (!walletConnecte) {
+    banner.classList.remove("hidden");
+    msg.textContent = "Action requise : Connectez MetaMask pour émettre des badges.";
+    [btnE1, btnE2].forEach(b => { if (b) b.disabled = true; });
+  } else if (walletConnecte.toLowerCase() !== walletLie.toLowerCase()) {
+    banner.classList.remove("hidden");
+    msg.textContent = `Erreur : Wallet mismatch. Connectez ${walletLie.slice(0, 6)}... dans MetaMask.`;
+    [btnE1, btnE2].forEach(b => { if (b) b.disabled = true; });
+  } else if (!estWhiteliste) {
+    banner.classList.remove("hidden");
+    msg.innerHTML = `⚠️ Wallet non whitelisté (${walletConnecte.slice(0, 6)}...). <button onclick="alert('Contactez l\\'admin (admin@skillbadge.com) pour activer votre whitelist.')" class="underline font-bold">Comment s'activer ?</button>`;
+    [btnE1, btnE2].forEach(b => { if (b) b.disabled = true; });
+  } else {
+    banner.classList.add("hidden");
+    [btnE1, btnE2].forEach(b => { if (b) b.disabled = false; });
+  }
+}
 
 // ── Connexion wallet MetaMask pour le formateur ────────────
 /**
@@ -694,47 +845,26 @@ export async function connecterWalletFormateur() {
   if (btn) { btn.disabled = true; btn.textContent = "Connexion…"; }
 
   try {
-    // 1) Connecte MetaMask + switch Polygon Amoy (via web3.js)
+    const { connectWallet, checkFormateurWhitelisted } = await import("./web3.js");
     const walletAddress = await connectWallet();
 
-    // 2) Sauvegarder dans Firebase
     const result = await lierWallet(currentFormateur.uid, walletAddress);
     if (!result.succes) {
       toast(result.erreur || "Impossible de sauvegarder le wallet.", "error");
       return;
     }
 
-    // 3) Mettre à jour l'état local
     currentFormateur.wallet = walletAddress;
-
-    // 4) Affichage adresse tronquée
     const adresseTronquee = `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`;
     if (display) {
       display.textContent = adresseTronquee;
       display.title = walletAddress;
     }
 
-    // 5) Vérifier si le formateur est whitelisté sur le contrat
-    let estWhitelisté = false;
-    try {
-      if (window.ethers && typeof window.ethers !== "undefined") {
-        const eth = window.ethereum;
-        if (eth) {
-          const { CONTRACT_ADDRESS, CONTRACT_ABI } = await getContractInfo();
-          if (CONTRACT_ADDRESS && CONTRACT_ABI) {
-            const provider = new window.ethers.BrowserProvider(eth);
-            const contract = new window.ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-            estWhitelisté = await contract.isFormateur(walletAddress);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("⚠️ Impossible de vérifier le statut formateur on-chain:", e);
-    }
+    const estWhiteliste = await checkFormateurWhitelisted(walletAddress);
 
-    // 6) Mettre à jour l'UI selon statut whitelist
     if (statusBadge) {
-      if (estWhitelisté) {
+      if (estWhiteliste) {
         statusBadge.textContent = "✓ Whitelisté";
         statusBadge.className = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
       } else {
@@ -751,17 +881,16 @@ export async function connecterWalletFormateur() {
         .replace("hover:bg-primary-700", "hover:bg-emerald-700");
     }
 
-    const msg = estWhitelisté
+    const msg = estWhiteliste
       ? `Wallet connecté : ${adresseTronquee}. Vous êtes whitelisté ✓`
       : `Wallet lié : ${adresseTronquee}. ⚠️ Non whitelisté — contactez l'admin.`;
-    toast(msg, estWhitelisté ? "success" : "info");
+    toast(msg, estWhiteliste ? "success" : "info");
+
+    await verifierEligibiliteEmission();
 
   } catch (e) {
     console.error("Erreur connexion wallet formateur:", e);
-    const msg = e.message?.includes("MetaMask")
-      ? "MetaMask non détecté. Installez l'extension et réessayez."
-      : (e.message || "Erreur de connexion au wallet.");
-    toast(msg, "error");
+    toast(e.message || "Erreur de connexion au wallet.", "error");
     if (btn) { btn.disabled = false; btn.textContent = "Connecter MetaMask"; }
   }
 }
@@ -877,7 +1006,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof unsubDemandes === "function") {
       try {
         unsubDemandes();
-      } catch (_) {}
+      } catch (_) { }
       unsubDemandes = null;
     }
 
@@ -910,10 +1039,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const nomEl = document.getElementById("formateur-nom");
     const orgEl = document.getElementById("formateur-org");
-    const av    = document.getElementById("avatar-top");
+    const av = document.getElementById("avatar-top");
     if (nomEl) nomEl.textContent = profil.nom || "Formateur";
     if (orgEl) orgEl.textContent = profil.organisation || "—";
-    if (av)    av.textContent = initiales(profil.nom);
+    if (av) av.textContent = initiales(profil.nom);
 
     // Afficher le wallet du formateur dans la carte statut
     afficherWalletFormateur(profil);
@@ -968,6 +1097,17 @@ document.addEventListener("DOMContentLoaded", () => {
     window.mettreAJourApercu();
 
     await window.chargerHistorique();
-    ecouterDemandes();
+    chargerDemandes();
+
+    // 5. Observer les changements de comptes MetaMask
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", async () => {
+        console.log("🦊 Compte MetaMask changé, re-vérification...");
+        await verifierEligibiliteEmission();
+      });
+    }
+
+    // 6. Vérifier l'éligibilité initiale
+    await verifierEligibiliteEmission();
   });
 });

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,15 +19,19 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
+
 <body class="bg-[#0f172a] text-slate-100 min-h-screen overflow-x-hidden">
 
   <!-- Vérification auth (avant affichage du dashboard) -->
-  <div id="global-auth-loading" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0f172a]" role="status" aria-live="polite" aria-busy="true">
+  <div id="global-auth-loading" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0f172a]"
+    role="status" aria-live="polite" aria-busy="true">
     <div class="h-10 w-10 rounded-full border-2 border-primary-600 border-t-transparent animate-spin"></div>
     <p class="mt-4 text-slate-400 text-sm">Vérification de votre session…</p>
   </div>
 
-  <div id="toast-formateur" class="fixed top-20 right-4 z-[150] hidden max-w-sm rounded-lg px-4 py-3 text-sm font-medium shadow-lg border"></div>
+  <div id="toast-formateur"
+    class="fixed top-20 right-4 z-[150] hidden max-w-sm rounded-lg px-4 py-3 text-sm font-medium shadow-lg border">
+  </div>
 
   <!-- Application (affichée après auth formateur) -->
   <div id="app-shell" class="hidden min-h-screen flex flex-col pt-16">
@@ -34,55 +39,99 @@
     <!-- Bannière statut approbation (injectée dynamiquement par formateur.js) -->
     <div id="banner-approbation" class="hidden"></div>
 
+    <!-- Bannière Éligibilité Blockchain (Phase 3) -->
+    <div id="banner-eligibilite" class="hidden bg-amber-600/20 border-b border-amber-600/30 px-4 py-3">
+      <div class="max-w-7xl mx-auto flex items-center gap-3 text-amber-200 text-sm">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p id="eligibilite-msg">Votre profil n'est pas encore prêt pour l'émission de badges on-chain.</p>
+        <button onclick="window.connecterWalletFormateur()"
+          class="ml-auto underline font-semibold hover:text-white transition">Action requise</button>
+      </div>
+    </div>
+
     <!-- Navbar fixe -->
-    <header class="fixed top-0 left-0 right-0 z-40 h-16 bg-[#1e293b] border-b border-slate-700 flex items-center px-3 lg:px-6 gap-3">
-      <button type="button" id="btn-open-drawer" class="lg:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-800" aria-label="Ouvrir le menu" aria-controls="mobile-drawer">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <header
+      class="fixed top-0 left-0 right-0 z-40 h-16 bg-[#1e293b] border-b border-slate-700 flex items-center px-3 lg:px-6 gap-3">
+      <button type="button" id="btn-open-drawer" class="lg:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-800"
+        aria-label="Ouvrir le menu" aria-controls="mobile-drawer">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
       </button>
       <a href="formateur.html" class="flex items-center gap-2 font-bold text-white shrink-0">
-        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-sm">SB</span>
         <span class="hidden sm:inline">SkillBadge <span class="text-slate-400 font-normal">Formateur</span></span>
       </a>
       <div class="flex-1"></div>
       <div class="flex items-center gap-3 min-w-0">
-        <div id="avatar-top" class="h-9 w-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white shrink-0" aria-hidden="true">?</div>
+        <div id="avatar-top"
+          class="h-9 w-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white shrink-0"
+          aria-hidden="true">?</div>
         <div class="hidden sm:block min-w-0">
           <p id="formateur-nom" class="text-sm font-medium text-white truncate">—</p>
           <p id="formateur-org" class="text-xs text-slate-400 truncate">—</p>
         </div>
-        <button type="button" id="btn-logout" class="shrink-0 rounded-lg border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 transition hover:scale-[1.02]">
+        <button type="button" id="btn-logout"
+          class="shrink-0 rounded-lg border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 transition hover:scale-[1.02]">
           Déconnexion
         </button>
       </div>
     </header>
 
     <div id="mobile-drawer-backdrop" class="fixed inset-0 z-30 bg-black/60 lg:hidden hidden"></div>
-    <aside id="mobile-drawer" class="fixed top-0 left-0 z-40 h-full w-64 bg-[#0f172a] border-r border-slate-700 transform -translate-x-full transition-transform lg:hidden pt-16 flex flex-col" hidden>
+    <aside id="mobile-drawer"
+      class="fixed top-0 left-0 z-40 h-full w-64 bg-[#0f172a] border-r border-slate-700 transform -translate-x-full transition-transform lg:hidden pt-16 flex flex-col"
+      hidden>
       <nav class="p-2 flex-1 space-y-1" aria-label="Navigation mobile">
-        <button type="button" class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800" data-section="sec-creer">Émettre un badge</button>
-        <button type="button" class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800" data-section="sec-historique">Historique</button>
-        <button type="button" class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800" data-section="sec-demandes">Demandes <span id="dem-count-mobile" class="ml-auto hidden min-w-[1.25rem] rounded-full bg-amber-500/20 px-1.5 text-center text-[10px] font-bold text-amber-400"></span></button>
+        <button type="button"
+          class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800"
+          data-section="sec-creer">Émettre un badge</button>
+        <button type="button"
+          class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800"
+          data-section="sec-historique">Historique</button>
+        <button type="button"
+          class="nav-item w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-300 hover:bg-slate-800"
+          data-section="sec-demandes">Demandes <span id="dem-count-mobile"
+            class="ml-auto hidden min-w-[1.25rem] rounded-full bg-amber-500/20 px-1.5 text-center text-[10px] font-bold text-amber-400"></span></button>
       </nav>
     </aside>
 
     <div class="flex flex-1 min-h-0">
       <!-- Sidebar desktop -->
-      <aside id="sidebar-desktop" class="hidden lg:flex w-64 shrink-0 flex-col border-r border-slate-800 bg-[#0f172a] pt-4">
+      <aside id="sidebar-desktop"
+        class="hidden lg:flex w-64 shrink-0 flex-col border-r border-slate-800 bg-[#0f172a] pt-4">
         <nav class="flex-1 space-y-1 px-2" aria-label="Navigation">
-          <button type="button" class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent" data-section="sec-creer">
-            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <button type="button"
+            class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent"
+            data-section="sec-creer">
+            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
             Émettre un badge
           </button>
-          <button type="button" class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent" data-section="sec-historique">
-            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <button type="button"
+            class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent"
+            data-section="sec-historique">
+            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
             Historique
           </button>
-          <button type="button" class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent" data-section="sec-demandes">
-            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <button type="button"
+            class="nav-item-desktop flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800/80 border-l-4 border-transparent"
+            data-section="sec-demandes">
+            <svg class="w-5 h-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
             Demandes reçues
-            <span id="dem-count" class="ml-auto hidden min-w-[1.25rem] rounded-full bg-amber-500/20 px-1.5 text-center text-[10px] font-bold text-amber-400"></span>
+            <span id="dem-count"
+              class="ml-auto hidden min-w-[1.25rem] rounded-full bg-amber-500/20 px-1.5 text-center text-[10px] font-bold text-amber-400"></span>
           </button>
-      </nav>
+        </nav>
         <div class="p-3 space-y-3 border-t border-slate-800">
           <!-- Carte statut wallet formateur -->
           <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
@@ -90,21 +139,23 @@
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-slate-200">Wallet blockchain</p>
                 <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                  <p id="formateur-wallet-display" class="font-mono text-[10px] text-slate-400" title="">Non connecté</p>
-                  <span id="wallet-status-badge" class="hidden inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"></span>
+                  <p id="formateur-wallet-display" class="font-mono text-[10px] text-slate-400" title="">Non connecté
+                  </p>
+                  <span id="wallet-status-badge"
+                    class="hidden inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"></span>
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              id="btn-connect-formateur-wallet"
-              class="mt-2 w-full rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
+            <button type="button" id="btn-connect-formateur-wallet"
+              class="mt-2 w-full rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500">
               Connecter MetaMask
             </button>
-            <p class="mt-2 text-[10px] text-slate-500">⚠️ Votre wallet doit être whitelisté sur le contrat pour émettre des badges on-chain.</p>
+            <p class="mt-2 text-[10px] text-slate-500">⚠️ Votre wallet doit être whitelisté sur le contrat pour émettre
+              des badges on-chain.</p>
           </div>
-          <button type="button" id="btn-sidebar-collapse" class="hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 hover:text-slate-300 lg:flex" aria-pressed="false" title="Réduire le menu (bientôt)">Réduire</button>
+          <button type="button" id="btn-sidebar-collapse"
+            class="hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 hover:text-slate-300 lg:flex"
+            aria-pressed="false" title="Réduire le menu (bientôt)">Réduire</button>
         </div>
       </aside>
 
@@ -112,22 +163,26 @@
         <!-- Section : émettre (3 étapes) -->
         <section id="sec-creer" class="page-sec max-w-4xl mx-auto">
           <h1 class="text-2xl font-bold text-slate-50">Émettre un badge</h1>
-          <p class="mt-1 text-sm text-slate-400">Créez un type de badge, choisissez un apprenant, confirmez l’attribution.</p>
+          <p class="mt-1 text-sm text-slate-400">Créez un type de badge, choisissez un apprenant, confirmez
+            l’attribution.</p>
 
           <!-- Barre d’étapes -->
           <div class="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/50 p-4">
             <div class="flex items-center gap-2">
-              <span id="snum1" class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">1</span>
+              <span id="snum1"
+                class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">1</span>
               <span id="slbl1" class="step-lbl text-xs font-medium text-primary-400">Type</span>
             </div>
             <div class="hidden h-px flex-1 bg-slate-600 sm:block min-w-[1rem]"></div>
             <div class="flex items-center gap-2">
-              <span id="snum2" class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-xs font-bold text-slate-400">2</span>
+              <span id="snum2"
+                class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-xs font-bold text-slate-400">2</span>
               <span id="slbl2" class="step-lbl text-xs text-slate-500">Attribution</span>
             </div>
             <div class="hidden h-px flex-1 bg-slate-600 sm:block min-w-[1rem]"></div>
             <div class="flex items-center gap-2">
-              <span id="snum3" class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-xs font-bold text-slate-400">3</span>
+              <span id="snum3"
+                class="step-num flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-xs font-bold text-slate-400">3</span>
               <span id="slbl3" class="step-lbl text-xs text-slate-500">Confirmation</span>
             </div>
           </div>
@@ -138,7 +193,9 @@
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-400" for="f-domaine">Domaine</label>
-                <select id="f-domaine" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" onchange="window.mettreAJourApercu && window.mettreAJourApercu()">
+                <select id="f-domaine"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  onchange="window.mettreAJourApercu && window.mettreAJourApercu()">
                   <option>Développement Web</option>
                   <option>Développement Mobile</option>
                   <option>Data & IA</option>
@@ -151,25 +208,40 @@
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-400" for="f-competence">Compétence visée</label>
-                <input id="f-competence" type="text" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" placeholder="Ex. React, sécurité réseau…" oninput="window.mettreAJourApercu && window.mettreAJourApercu()" />
+                <input id="f-competence" type="text"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="Ex. React, sécurité réseau…"
+                  oninput="window.mettreAJourApercu && window.mettreAJourApercu()" />
               </div>
               <div class="sm:col-span-2">
                 <span class="mb-1 block text-xs font-medium text-slate-400">Niveau</span>
                 <input type="hidden" id="f-niveau" value="" />
                 <div class="flex flex-wrap gap-2">
-                  <button type="button" class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]" data-n="Débutant" style="background:#14532d33;color:#4ade80">Débutant</button>
-                  <button type="button" class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]" data-n="Intermédiaire" style="background:#1e3a5f33;color:#60a5fa">Intermédiaire</button>
-                  <button type="button" class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]" data-n="Avancé" style="background:#713f1233;color:#fbbf24">Avancé</button>
-                  <button type="button" class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]" data-n="Expert" style="background:#4c1d9533;color:#c084fc">Expert</button>
+                  <button type="button"
+                    class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]"
+                    data-n="Débutant" style="background:#14532d33;color:#4ade80">Débutant</button>
+                  <button type="button"
+                    class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]"
+                    data-n="Intermédiaire" style="background:#1e3a5f33;color:#60a5fa">Intermédiaire</button>
+                  <button type="button"
+                    class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]"
+                    data-n="Avancé" style="background:#713f1233;color:#fbbf24">Avancé</button>
+                  <button type="button"
+                    class="niveau-btn rounded-full border-2 border-transparent px-4 py-1.5 text-xs font-semibold transition hover:scale-[1.02]"
+                    data-n="Expert" style="background:#4c1d9533;color:#c084fc">Expert</button>
                 </div>
               </div>
               <div class="sm:col-span-2">
-                <label class="mb-1 block text-xs font-medium text-slate-400" for="f-criteres">Critères d’évaluation</label>
-                <textarea id="f-criteres" rows="3" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" placeholder="Décrivez les critères…"></textarea>
+                <label class="mb-1 block text-xs font-medium text-slate-400" for="f-criteres">Critères
+                  d’évaluation</label>
+                <textarea id="f-criteres" rows="3"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="Décrivez les critères…"></textarea>
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-400" for="f-validite">Validité</label>
-                <select id="f-validite" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                <select id="f-validite"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500">
                   <option value="6mois">6 mois</option>
                   <option value="1an" selected>1 an</option>
                   <option value="2ans">2 ans</option>
@@ -178,19 +250,24 @@
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-400" for="f-score">Score minimum (/100)</label>
-                <input id="f-score" type="number" min="0" max="100" value="70" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" />
+                <input id="f-score" type="number" min="0" max="100" value="70"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" />
               </div>
             </div>
             <div class="mt-6 flex flex-wrap items-center gap-4">
-              <div class="flex flex-1 min-w-[12rem] items-center gap-3 rounded-xl border border-slate-600 bg-slate-900/40 p-3">
-                <div id="prev-hex" class="h-14 w-14 shrink-0 overflow-hidden" style="clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:#334155"></div>
+              <div
+                class="flex flex-1 min-w-[12rem] items-center gap-3 rounded-xl border border-slate-600 bg-slate-900/40 p-3">
+                <div id="prev-hex" class="h-14 w-14 shrink-0 overflow-hidden"
+                  style="clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:#334155"></div>
                 <div class="min-w-0 text-xs">
                   <p id="prev-domaine" class="truncate font-medium text-slate-200">Domaine</p>
                   <p id="prev-comp" class="truncate text-slate-400">Compétence</p>
-                  <span id="prev-niveau" class="mt-1 inline-block rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-300">Niveau</span>
+                  <span id="prev-niveau"
+                    class="mt-1 inline-block rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-300">Niveau</span>
                 </div>
               </div>
-              <button type="button" id="btn-etape1" onclick="window.etape1Valider && window.etape1Valider()" class="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#1e293b]">
+              <button type="button" id="btn-etape1" onclick="window.etape1Valider && window.etape1Valider()"
+                class="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#1e293b]">
                 Valider et continuer
               </button>
             </div>
@@ -201,23 +278,33 @@
             <h2 class="text-lg font-semibold text-white">Étape 2 — Attribuer à un apprenant</h2>
             <p class="mt-1 text-sm text-slate-400">Résumé : <span id="recap-badge" class="text-primary-400">—</span></p>
             <div class="mt-4">
-              <label class="mb-1 block text-xs font-medium text-slate-400" for="search-apprenant">Rechercher un apprenant</label>
-              <input id="search-apprenant" type="search" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" placeholder="Nom ou e-mail (min. 2 caractères)" autocomplete="off" />
+              <label class="mb-1 block text-xs font-medium text-slate-400" for="search-apprenant">Rechercher un
+                apprenant</label>
+              <input id="search-apprenant" type="search"
+                class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                placeholder="Nom ou e-mail (min. 2 caractères)" autocomplete="off" />
             </div>
-            <div id="liste-apprenants" class="mt-3 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900/30 p-2"></div>
+            <div id="liste-apprenants"
+              class="mt-3 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900/30 p-2">
+            </div>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-400" for="a-score">Score obtenu (/100)</label>
-                <input id="a-score" type="number" min="0" max="100" value="85" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" />
+                <input id="a-score" type="number" min="0" max="100" value="85"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500" />
               </div>
               <div class="sm:col-span-2">
-                <label class="mb-1 block text-xs font-medium text-slate-400" for="a-commentaire">Commentaire (optionnel)</label>
-                <textarea id="a-commentaire" rows="2" class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"></textarea>
+                <label class="mb-1 block text-xs font-medium text-slate-400" for="a-commentaire">Commentaire
+                  (optionnel)</label>
+                <textarea id="a-commentaire" rows="2"
+                  class="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"></textarea>
               </div>
             </div>
             <div class="mt-6 flex flex-wrap justify-between gap-3">
-              <button type="button" onclick="window.showStep && window.showStep(1)" class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 transition hover:scale-[1.02] hover:bg-slate-800">Retour</button>
-              <button type="button" id="btn-etape2" onclick="window.etape2Valider && window.etape2Valider()" class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#1e293b]">
+              <button type="button" onclick="window.showStep && window.showStep(1)"
+                class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 transition hover:scale-[1.02] hover:bg-slate-800">Retour</button>
+              <button type="button" id="btn-etape2" onclick="window.etape2Valider && window.etape2Valider()"
+                class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#1e293b]">
                 Émettre le badge
               </button>
             </div>
@@ -226,23 +313,43 @@
           <!-- Étape 3 -->
           <div id="step-content-3" class="mt-6 hidden rounded-2xl border border-slate-700 bg-[#1e293b] p-6 shadow-xl">
             <div id="success-box" class="text-center">
-              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
-                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <div
+                class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
               </div>
               <h2 class="mt-4 text-xl font-bold text-white">Badge émis</h2>
-              <p class="mt-1 text-sm text-slate-400">L’attribution a été enregistrée (Firebase + tentative blockchain).</p>
-              <div class="mx-auto mt-6 max-w-md space-y-2 rounded-xl border border-slate-600 bg-slate-900/40 px-4 py-3 text-left text-sm">
-                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span class="text-slate-500">Badge</span><span id="conf-badge" class="font-medium text-slate-100 text-right">—</span></div>
-                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span class="text-slate-500">Apprenant</span><span id="conf-apprenant" class="text-slate-200 text-right">—</span></div>
-                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span class="text-slate-500">Score</span><span id="conf-score" class="text-slate-200 text-right">—</span></div>
-                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span class="text-slate-500">Date</span><span id="conf-date" class="text-slate-200 text-right">—</span></div>
-                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span class="text-slate-500">Transaction</span><span id="conf-nft" class="font-mono text-xs text-slate-300 text-right break-all">—</span></div>
-                <div class="flex justify-between gap-4 py-2"><span class="text-slate-500">Blockchain</span><span id="conf-bloc" class="text-slate-200 text-right">—</span></div>
+              <p class="mt-1 text-sm text-slate-400">L’attribution a été enregistrée (Firebase + tentative blockchain).
+              </p>
+              <div
+                class="mx-auto mt-6 max-w-md space-y-2 rounded-xl border border-slate-600 bg-slate-900/40 px-4 py-3 text-left text-sm">
+                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span
+                    class="text-slate-500">Badge</span><span id="conf-badge"
+                    class="font-medium text-slate-100 text-right">—</span></div>
+                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span
+                    class="text-slate-500">Apprenant</span><span id="conf-apprenant"
+                    class="text-slate-200 text-right">—</span></div>
+                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span
+                    class="text-slate-500">Score</span><span id="conf-score" class="text-slate-200 text-right">—</span>
+                </div>
+                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span
+                    class="text-slate-500">Date</span><span id="conf-date" class="text-slate-200 text-right">—</span>
+                </div>
+                <div class="flex justify-between gap-4 border-b border-slate-700 py-2"><span
+                    class="text-slate-500">Transaction</span><span id="conf-nft"
+                    class="font-mono text-xs text-slate-300 text-right break-all">—</span></div>
+                <div class="flex justify-between gap-4 py-2"><span class="text-slate-500">Blockchain</span><span
+                    id="conf-bloc" class="text-slate-200 text-right">—</span></div>
               </div>
               <div id="conf-polygon-wrap" class="mt-4 hidden text-sm"></div>
               <div class="mt-8 flex flex-wrap justify-center gap-3">
-                <button type="button" onclick="window.recommencer && window.recommencer()" class="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-primary-500">Nouveau badge</button>
-                <button type="button" onclick="window.showSection && window.showSection('sec-historique')" class="rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:scale-[1.02] hover:bg-slate-800">Voir l’historique</button>
+                <button type="button" onclick="window.recommencer && window.recommencer()"
+                  class="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-primary-500">Nouveau
+                  badge</button>
+                <button type="button" onclick="window.showSection && window.showSection('sec-historique')"
+                  class="rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:scale-[1.02] hover:bg-slate-800">Voir
+                  l’historique</button>
               </div>
             </div>
           </div>
@@ -268,23 +375,42 @@
           </div>
         </section>
 
-        <!-- Demandes -->
+        <!-- Demandes (Version Phase 3 Hardening) -->
         <section id="sec-demandes" class="page-sec hidden max-w-5xl mx-auto">
-          <h1 class="text-2xl font-bold text-slate-50">Demandes de validation</h1>
-          <p class="mt-1 text-sm text-slate-400">Demandes reçues en temps réel depuis les apprenants.</p>
-          <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-700 bg-[#1e293b] shadow-xl">
-            <table class="w-full min-w-[720px] border-collapse text-left text-sm">
-              <thead>
-                <tr class="border-b border-slate-600 bg-slate-900/50 text-xs uppercase tracking-wide text-slate-400">
-                  <th class="px-4 py-3 font-semibold">Apprenant</th>
-                  <th class="px-4 py-3 font-semibold">Domaine</th>
-                  <th class="px-4 py-3 font-semibold">Niveau</th>
-                  <th class="px-4 py-3 font-semibold">Statut</th>
-                  <th class="px-4 py-3 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="dem-tbody"></tbody>
-            </table>
+          <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 mb-6">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+              📩 Demandes de validation reçues
+              <span id="demandes-count" class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">0</span>
+            </h2>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm border-collapse">
+                <thead class="bg-slate-900 text-slate-400 border-b border-slate-700">
+                  <tr>
+                    <th class="px-4 py-3 font-semibold">Apprenant</th>
+                    <th class="px-4 py-3 font-semibold">Compétence</th>
+                    <th class="px-4 py-3 font-semibold">Niveau</th>
+                    <th class="px-4 py-3 font-semibold">Message</th>
+                    <th class="px-4 py-3 font-semibold text-center">Statut</th>
+                    <th class="px-4 py-3 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="demandes-tbody">
+                  <tr>
+                    <td colspan="6" class="px-4 py-12 text-center text-slate-500">Chargement des demandes...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Message si aucune demande -->
+            <div id="demandes-empty" class="hidden text-center py-12 text-slate-500 bg-slate-900/20 rounded-xl mt-4">
+              <svg class="w-12 h-12 mx-auto text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 00-2 2H6a2 2 0 00-2 2V13m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              Aucune demande en attente pour le moment.
+            </div>
           </div>
         </section>
       </main>
@@ -292,13 +418,17 @@
   </div>
 
   <!-- Modale détail (badge ou demande) -->
-  <div id="modal-overlay" class="fixed inset-0 z-[180] hidden items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-    <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-600 bg-[#1e293b] p-6 shadow-2xl">
+  <div id="modal-overlay" class="fixed inset-0 z-[180] hidden items-center justify-center bg-black/70 p-4" role="dialog"
+    aria-modal="true">
+    <div
+      class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-600 bg-[#1e293b] p-6 shadow-2xl">
       <div id="modal-content" class="text-sm text-slate-200"></div>
-      <button type="button" onclick="window.fermerModal && window.fermerModal()" class="mt-6 w-full rounded-lg border border-slate-600 py-2 text-sm text-slate-300 hover:bg-slate-800">Fermer</button>
+      <button type="button" onclick="window.fermerModal && window.fermerModal()"
+        class="mt-6 w-full rounded-lg border border-slate-600 py-2 text-sm text-slate-300 hover:bg-slate-800">Fermer</button>
     </div>
   </div>
 
   <script type="module" src="js/formateur.js"></script>
 </body>
+
 </html>

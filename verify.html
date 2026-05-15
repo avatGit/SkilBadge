@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkillBadge — Vérification publique</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillBadge — Portail Recruteur</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -17,33 +18,281 @@
     };
   </script>
   <style>
-    .hex-badge-verify {
-      width: 64px;
-      height: 64px;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .hex-badge {
+      width: 48px;
+      height: 48px;
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      background: var(--hex-bg, #334155);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e293b;
+      transition: transform 0.3s ease;
     }
-    .spinner-verify {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(59, 130, 246, 0.2);
-      border-top-color: #2563eb;
-      border-radius: 50%;
-      animation: spin-verify 1s linear infinite;
+
+    .hex-badge:hover {
+      transform: scale(1.1);
     }
-    @keyframes spin-verify {
-      to { transform: rotate(360deg); }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 10px;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        background: white !important;
+        color: black !important;
+      }
+
+      .bg-slate-800,
+      .bg-slate-900,
+      .bg-slate-950 {
+        background: white !important;
+        border: 1px solid #e2e8f0 !important;
+        color: black !important;
+      }
+
+      .text-slate-400,
+      .text-slate-500 {
+        color: #64748b !important;
+      }
+
+      .modal-fixed-header {
+        position: static !important;
+      }
     }
   </style>
-  <!-- Ethers global requis par js/web3.js (chaîne d’imports badges → web3) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="bg-slate-900 min-h-screen text-slate-100 p-6">
-  <header class="max-w-3xl mx-auto mb-8 flex items-center justify-between">
-    <a href="login.html" class="text-primary-500 hover:underline text-sm font-medium">SkillBadge</a>
-    <span class="text-slate-500 text-xs">Lecture seule</span>
-  </header>
-  <main id="verify-root" class="max-w-3xl mx-auto"></main>
-  <script type="module" src="js/verify-page.js"></script>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-x-hidden">
+
+  <!-- Navbar -->
+  <nav class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 no-print">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-500 rounded-xl flex items-center justify-center font-bold shadow-lg shadow-blue-500/20">
+          SB</div>
+        <div>
+          <h1 class="font-bold text-lg tracking-tight">SkillBadge Recruteur</h1>
+          <p class="text-[10px] uppercase tracking-widest text-blue-400 font-semibold">Verification Portal</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="recruteur-info"
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-full border border-slate-700">
+          <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold"
+            id="rec-avatar">R</div>
+          <span class="text-xs font-medium" id="rec-name">Recruteur</span>
+        </div>
+        <button id="btn-logout"
+          class="px-4 py-2 bg-slate-800 hover:bg-red-900/30 hover:text-red-400 hover:border-red-900/50 border border-slate-700 rounded-lg text-sm font-medium transition-all">Déconnexion</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 no-print">
+
+    <!-- Hero / Search Section -->
+    <header class="mb-10 text-center max-w-2xl mx-auto">
+      <h2 class="text-3xl font-bold mb-3 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+        Vérifiez l'authenticité des talents</h2>
+      <p class="text-slate-400 text-sm mb-8">Recherchez un candidat par son wallet blockchain, son nom ou son adresse
+        email pour consulter ses certifications vérifiées on-chain sur Polygon.</p>
+
+      <div class="relative group">
+        <div
+          class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000 group-hover:duration-200">
+        </div>
+        <div
+          class="relative flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden focus-within:border-blue-500/50 transition-all">
+          <div class="pl-4 text-slate-500">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" id="search-input" placeholder="Adresse wallet (0x...), nom ou email..."
+            class="w-full px-4 py-4 bg-transparent text-white placeholder-slate-500 focus:outline-none text-sm">
+        </div>
+
+        <!-- Dropdown Résultats de recherche -->
+        <div id="search-results"
+          class="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 hidden max-h-96 overflow-y-auto custom-scrollbar">
+          <!-- Injecté par JS -->
+        </div>
+      </div>
+    </header>
+
+    <!-- Apprenants Grid/Table -->
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Annuaire des Candidats Certifiés
+        </h3>
+        <div class="text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+          <span id="total-candidates">0</span> candidats trouvés
+        </div>
+      </div>
+
+      <div class="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900/80 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
+                <th class="px-6 py-4 border-b border-slate-800">Candidat</th>
+                <th class="px-6 py-4 border-b border-slate-800 hidden md:table-cell">Contact</th>
+                <th class="px-6 py-4 border-b border-slate-800 hidden lg:table-cell">Wallet Blockchain</th>
+                <th class="px-6 py-4 border-b border-slate-800 text-center">Badges</th>
+                <th class="px-6 py-4 border-b border-slate-800 text-right">Portfolio</th>
+              </tr>
+            </thead>
+            <tbody id="apprenants-table" class="divide-y divide-slate-800/50">
+              <!-- Loading State -->
+              <tr id="table-loading">
+                <td colspan="5" class="px-6 py-12 text-center">
+                  <div
+                    class="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin">
+                  </div>
+                  <p class="mt-2 text-slate-500 text-sm">Chargement des candidats...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal : Portfolio détaillé -->
+  <div id="portfolio-modal"
+    class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden items-center justify-center z-50 p-0 sm:p-4 transition-all duration-300">
+    <div
+      class="bg-slate-900 w-full max-w-5xl h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl flex flex-col shadow-2xl border border-slate-800 overflow-hidden">
+
+      <!-- Modal Header -->
+      <div
+        class="modal-fixed-header flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-500/20"
+            id="modal-avatar">?</div>
+          <div>
+            <h3 class="text-2xl font-bold text-white tracking-tight" id="modal-apprenant-nom">—</h3>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+              <p class="text-sm text-slate-400 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span id="modal-apprenant-email">—</span>
+              </p>
+              <p class="text-xs font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20"
+                id="modal-wallet-short">—</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 no-print">
+          <button id="btn-print"
+            class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            title="Télécharger CV Blockchain">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+          </button>
+          <button id="btn-close-modal"
+            class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto custom-scrollbar bg-slate-950/30">
+        <!-- Dashboard Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Badges Certifiés</p>
+            <p class="text-2xl font-bold text-white" id="modal-count-badges">0</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">On-Chain Verified</p>
+            <p class="text-2xl font-bold text-emerald-500" id="modal-count-verified">0</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 col-span-2">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Blockchain Address</p>
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-mono text-slate-300 truncate mr-2" id="modal-wallet-full">0x...</p>
+              <button id="btn-copy-wallet"
+                class="text-blue-500 text-xs font-bold hover:underline shrink-0 no-print">COPIER</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badges Grid -->
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="text-lg font-bold">Certifications Blockchain</h4>
+          <span
+            class="text-[10px] text-slate-500 bg-slate-900 px-2 py-1 rounded border border-slate-800 uppercase tracking-widest font-bold">Polygon
+            Amoy Testnet</span>
+        </div>
+
+        <div id="modal-badges-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <!-- Injecté par JS -->
+        </div>
+
+        <!-- Footer / QR Code for mobile verify -->
+        <div
+          class="mt-12 p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 flex flex-col md:flex-row items-center gap-6">
+          <div class="flex-1 text-center md:text-left">
+            <h5 class="text-lg font-bold mb-2">Vérification Instantanée</h5>
+            <p class="text-slate-400 text-sm">Chaque badge affiché est lu directement depuis le smart contract sur la
+              blockchain Polygon. Le statut "Vérifié" garantit que le candidat possède bien le jeton NFT associé à cette
+              compétence.</p>
+          </div>
+          <div class="w-32 h-32 bg-white rounded-xl p-2 shrink-0 shadow-xl hidden md:block">
+            <!-- Sim QR Code -->
+            <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+              <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm15 0h3v3h-3v-3zm0 5h3v3h-3v-3zM13 13h3v3h-3v-3zm0 5h3v3h-3v-3zM16 16h2v2h-2v-2z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/verify.js"></script>
 </body>
+
 </html>

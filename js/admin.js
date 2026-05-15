@@ -29,6 +29,34 @@ const ADMIN_CONFIG = {
 };
 
 // ─────────────────────────────────────────────────────────
+//  DEBUG & ERROR HANDLING (Debug Profond)
+// ─────────────────────────────────────────────────────────
+console.log("📍 admin.js: script loaded");
+
+window.addEventListener('error', (e) => {
+  console.error("❌ Global error admin:", {
+    message: e.message,
+    filename: e.filename,
+    lineno: e.lineno,
+    colno: e.colno,
+    stack: e.error?.stack
+  });
+
+  // Affichage visuel de l'erreur pour déboguer sans inspecteur
+  const errorBanner = document.createElement('div');
+  errorBanner.style.cssText = "position:fixed;top:0;left:0;right:0;background:#ef4444;color:white;padding:12px;z-index:10000;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.5);";
+  errorBanner.innerHTML = `<strong>❌ Erreur Critique Admin:</strong> ${e.message} <br> <small>${e.filename}:${e.lineno}</small>`;
+  document.body.appendChild(errorBanner);
+
+  // Débloquer l'interface quand même pour permettre de voir ce qui se passe
+  revelerInterface();
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error("❌ Unhandled promise rejection:", e.reason);
+});
+
+// ─────────────────────────────────────────────────────────
 //  ÉTAT GLOBAL
 // ─────────────────────────────────────────────────────────
 let adminUid = null;
@@ -39,29 +67,81 @@ let unsubscribeListeners = [];
 //  INITIALISATION AU CHARGEMENT
 // ─────────────────────────────────────────────────────────
 export function initAdmin() {
-  const loginPanel = document.getElementById("login-panel");
-  const dashPanel = document.getElementById("dash-panel");
+  console.log('🚀 initAdmin started');
+  const loader = document.getElementById("admin-loader");
 
-  // Vérifier si déjà authentifié (session Firebase persistante)
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      // Vérifier que c'est bien l'admin via sessionStorage ET le bon uid
-      const sessionOk = sessionStorage.getItem("adminConnected") === "true";
-      if (sessionOk || user.email === ADMIN_CONFIG.email) {
-        adminUid = user.uid;
-        sessionStorage.setItem("adminConnected", "true");
-        loginPanel?.classList.add("hidden");
-        dashPanel?.classList.remove("hidden");
-        chargerDashboard();
-      } else {
-        // Connecté mais pas admin → déconnecter
-        await signOut(auth);
-        afficherLoginPanel();
+  try {
+    // Vérification asynchrone de l'état de connexion
+    onAuthStateChanged(auth, async (user) => {
+      console.log('🔍 Auth state change:', user ? `User: ${user.email}` : 'No user');
+
+      try {
+        if (user) {
+          // Double vérification: flag session OU email hardcoded
+          const sessionOk = sessionStorage.getItem("adminConnected") === "true";
+          const isHardcodedAdmin = user.email === ADMIN_CONFIG.email;
+
+          if (sessionOk || isHardcodedAdmin) {
+            console.log("✅ Admin access granted");
+            adminUid = user.uid;
+            sessionStorage.setItem("adminConnected", "true");
+
+            // Masquer le panel de login, afficher le dash
+            document.getElementById("login-panel")?.classList.add("hidden");
+            document.getElementById("dash-panel")?.classList.remove("hidden");
+
+            // Charger les données (asynchrone, ne bloque pas l'affichage)
+            chargerDashboard();
+          } else {
+            console.warn("🚫 Accès refusé: pas les droits admin");
+            await signOut(auth);
+            afficherLoginPanel();
+          }
+        } else {
+          console.log("ℹ️ Aucun utilisateur connecté, affichage login");
+          afficherLoginPanel();
+        }
+      } catch (innerError) {
+        console.error("❌ Erreur dans la callback auth:", innerError);
+      } finally {
+        // Toujours révéler l'interface après avoir décidé quoi afficher
+        revelerInterface();
       }
-    } else {
-      afficherLoginPanel();
+    });
+
+    // Sécurité : Révéler après 4s même si Firebase/Network est lent
+    setTimeout(() => {
+      const loaderVisible = !document.getElementById("admin-loader")?.classList.contains('hidden');
+      if (loaderVisible) {
+        console.warn('🕒 Timeout sécurité: Révélation forcée');
+        revelerInterface();
+      }
+    }, 4000);
+
+  } catch (err) {
+    console.error('❌ Erreur critique initAdmin:', err);
+    if (loader) {
+      loader.innerHTML = `<div class="p-6 bg-red-600/20 text-red-400 rounded-xl border border-red-500/50">
+        <p class="font-bold">Erreur d'initialisation</p>
+        <p class="text-xs mt-1">${err.message}</p>
+      </div>`;
     }
-  });
+    revelerInterface();
+  }
+}
+
+function revelerInterface() {
+  const loader = document.getElementById("admin-loader");
+  const wrapper = document.getElementById("admin-main-wrapper");
+
+  if (loader) {
+    loader.classList.add('opacity-0');
+    setTimeout(() => loader.classList.add('hidden'), 500);
+  }
+  if (wrapper) {
+    wrapper.classList.remove('opacity-0', 'pointer-events-none');
+    wrapper.classList.add('opacity-100');
+  }
 }
 
 function afficherLoginPanel() {

@@ -19,15 +19,8 @@ import {
 
 import { auth, db } from "./firebase.js";
 
-// ── Générer un faux wallet blockchain ──────────────────────
-function genererWallet() {
-  const chars = "0123456789abcdef";
-  let wallet = "0x";
-  for (let i = 0; i < 40; i++) {
-    wallet += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return wallet;
-}
+// Les fonctions genererWallet() et mocks blockchain sont supprimées en Phase 3 
+// au profit de l'utilisation réelle de MetaMask et de la blockchain.
 
 // ── Générer un faux hash NFT ───────────────────────────────
 export function genererHashNFT() {
@@ -54,38 +47,40 @@ export async function inscrire({
   motDePasse,
   role,
   organisation = "",
-  // Champs supplémentaires formateur (Phase 3)
-  portfolioUrl   = "",
-  preuveSociale  = "",
-  adresseCentre  = "",
-  // Wallet optionnel fourni à l'inscription
-  walletFourni   = "",
+  // Champs supplémentaires formateur
+  portfolioUrl = "",
+  preuveSociale = "",
+  adresseCentre = "",
+  // Wallet blockchain (OBLIGATOIRE en Phase 3 pour apprenant/formateur)
+  wallet = "",
 }) {
   try {
-    // 1. Créer le compte Firebase Auth
+    // 1. Validation du wallet pour les rôles actifs sur la blockchain
+    if (role === "apprenant" || role === "formateur") {
+      if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+        return { succes: false, erreur: "Une adresse wallet blockchain valide (0x...) est requise." };
+      }
+    }
+
+    // 2. Créer le compte Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, motDePasse);
     const user = userCredential.user;
 
-    // 2. Choisir le wallet : fourni par l'utilisateur ou généré
-    const wallet = (role !== "recruteur" && walletFourni && /^0x[a-fA-F0-9]{40}$/.test(walletFourni))
-      ? walletFourni
-      : genererWallet();
-
-    // 3. Construire le profil de base
+    // 3. Construire le profil (wallet forcé en minuscules)
     const profil = {
       nom,
       email,
       role,
       organisation,
-      wallet,
+      wallet: wallet ? wallet.toLowerCase() : "",
       createdAt: Date.now(),
     };
 
     // 4. Champs spécifiques au rôle formateur
     if (role === "formateur") {
-      profil.statut       = "en_attente";  // Doit être approuvé par l'admin
-      profil.approuvePar  = null;
-      profil.portfolioUrl  = portfolioUrl;
+      profil.statut = "en_attente";  // Doit être approuvé par l'admin
+      profil.approuvePar = null;
+      profil.portfolioUrl = portfolioUrl;
       profil.preuveSociale = preuveSociale;
       profil.adresseCentre = adresseCentre;
     }
@@ -128,6 +123,8 @@ export async function connecter({ email, motDePasse }) {
 // ─────────────────────────────────────────────────────────
 export async function deconnecter() {
   try {
+    sessionStorage.clear();
+    localStorage.removeItem("skillbadge_session");
     await signOut(auth);
     return { succes: true };
   } catch (erreur) {
@@ -204,7 +201,7 @@ export async function lierWallet(uid, walletAddress) {
 export async function aWalletConnecte(uid) {
   const profil = await getProfil(uid);
   if (!profil) return false;
-  
+
   // Un wallet "réel" commence par 0x et fait 42 caractères
   // (les placeholders générés peuvent être filtrés si besoin)
   return /^0x[a-fA-F0-9]{40}$/.test(profil.wallet);
@@ -248,12 +245,12 @@ export function observerConnexion(callback) {
 // ─────────────────────────────────────────────────────────
 function traduireErreur(code) {
   const erreurs = {
-    "auth/email-already-in-use"  : "Cette adresse e-mail est déjà utilisée.",
-    "auth/invalid-email"         : "L'adresse e-mail n'est pas valide.",
-    "auth/weak-password"         : "Le mot de passe doit contenir au moins 6 caractères.",
-    "auth/user-not-found"        : "Aucun compte trouvé avec cet e-mail.",
-    "auth/wrong-password"        : "Mot de passe incorrect.",
-    "auth/too-many-requests"     : "Trop de tentatives. Réessayez dans quelques minutes.",
+    "auth/email-already-in-use": "Cette adresse e-mail est déjà utilisée.",
+    "auth/invalid-email": "L'adresse e-mail n'est pas valide.",
+    "auth/weak-password": "Le mot de passe doit contenir au moins 6 caractères.",
+    "auth/user-not-found": "Aucun compte trouvé avec cet e-mail.",
+    "auth/wrong-password": "Mot de passe incorrect.",
+    "auth/too-many-requests": "Trop de tentatives. Réessayez dans quelques minutes.",
     "auth/network-request-failed": "Problème de connexion réseau."
   };
   return erreurs[code] || "Une erreur est survenue. Veuillez réessayer.";

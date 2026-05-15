@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkillBadge — Connexion</title>
-  
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- Configuration des couleurs -->
   <script>
     tailwind.config = {
@@ -26,58 +27,72 @@
       }
     }
   </script>
-  
+
   <style>
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
+
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen flex items-center justify-center p-4">
 
   <!-- Container principal -->
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
-    
+
     <!-- Header avec logo -->
     <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-8 text-center">
-      <div class="w-16 h-16 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-        <span class="text-3xl font-bold text-primary-600">SB</span>
+      <div class="w-16 h-16   mx-auto mb-4 flex items-center justify-center shadow-lg">
+        <h1 class="text-4xl font-bold text-white">SkillBadge</h1>
       </div>
-      <h1 class="text-2xl font-bold text-white">SkillBadge</h1>
       <p class="text-blue-100 text-sm mt-1">Certification blockchain des compétences</p>
     </div>
 
     <!-- Onglets Connexion / Inscription -->
     <div class="flex border-b border-gray-200">
-      <button id="tab-login" onclick="showTab('login')" class="flex-1 py-4 px-6 text-sm font-semibold transition tab-active">
+      <button id="tab-login" onclick="showTab('login')"
+        class="flex-1 py-4 px-6 text-sm font-semibold transition tab-active">
         Connexion
       </button>
-      <button id="tab-register" onclick="showTab('register')" class="flex-1 py-4 px-6 text-sm font-semibold transition tab-inactive">
+      <button id="tab-register" onclick="showTab('register')"
+        class="flex-1 py-4 px-6 text-sm font-semibold transition tab-inactive">
         Créer un compte
       </button>
     </div>
 
     <!-- Contenu -->
     <div class="p-8">
-      
+
       <!-- FORMULAIRE DE CONNEXION -->
       <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
-          <input type="email" id="login-email" required 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="vous@exemple.com">
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
-          <input type="password" id="login-password" required 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="••••••••">
+          <input type="email" id="login-email" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="vous@exemple.com">
         </div>
 
-        <button type="submit" id="btn-login" 
-                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+          <input type="password" id="login-password" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="••••••••">
+        </div>
+
+        <button type="submit" id="btn-login"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
           Se connecter
         </button>
 
@@ -86,22 +101,22 @@
 
       <!-- FORMULAIRE D'INSCRIPTION -->
       <form id="form-register" class="space-y-5 hidden" onsubmit="handleRegister(event)">
-        
+
         <!-- Sélection du rôle -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Je suis</label>
           <div class="grid grid-cols-3 gap-2">
-            <button type="button" onclick="selectRole('apprenant')" id="role-apprenant" 
-                    class="role-btn px-3 py-2 border-2 border-primary-600 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium transition">
-               Apprenant
+            <button type="button" onclick="selectRole('apprenant')" id="role-apprenant"
+              class="role-btn px-3 py-2 border-2 border-primary-600 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium transition">
+              Apprenant
             </button>
-            <button type="button" onclick="selectRole('formateur')" id="role-formateur" 
-                    class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
-               Formateur
+            <button type="button" onclick="selectRole('formateur')" id="role-formateur"
+              class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
+              Formateur
             </button>
-            <button type="button" onclick="selectRole('recruteur')" id="role-recruteur" 
-                    class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
-               Recruteur
+            <button type="button" onclick="selectRole('recruteur')" id="role-recruteur"
+              class="role-btn px-3 py-2 border-2 border-gray-200 text-gray-600 rounded-lg text-sm font-medium transition hover:border-gray-300">
+              Recruteur
             </button>
           </div>
           <input type="hidden" id="register-role" value="apprenant">
@@ -109,16 +124,16 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
-          <input type="text" id="register-nom" required 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="Mamadou TRAORÉ">
+          <input type="text" id="register-nom" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="Mamadou TRAORÉ">
         </div>
 
         <div id="field-organisation" class="hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Organisation / Centre</label>
-          <input type="text" id="register-organisation" 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="Cercle Numérique">
+          <input type="text" id="register-organisation"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="Cercle Numérique">
         </div>
 
         <!-- Champs supplémentaires formateur -->
@@ -127,9 +142,9 @@
             Portfolio / LinkedIn / GitHub
             <span class="text-gray-400 font-normal text-xs">(recommandé)</span>
           </label>
-          <input type="url" id="register-portfolio" 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition font-mono text-sm"
-                 placeholder="https://linkedin.com/in/votre-profil">
+          <input type="url" id="register-portfolio"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition font-mono text-sm"
+            placeholder="https://linkedin.com/in/votre-profil">
         </div>
 
         <div id="field-preuves" class="hidden">
@@ -138,8 +153,8 @@
             <span class="text-gray-400 font-normal text-xs">(expériences, certifications…)</span>
           </label>
           <textarea id="register-preuves" rows="3"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm resize-none"
-                    placeholder="Ex: 5 ans d'expérience en développement web, certifié AWS…"></textarea>
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm resize-none"
+            placeholder="Ex: 5 ans d'expérience en développement web, certifié AWS…"></textarea>
         </div>
 
         <div id="field-adresse" class="hidden">
@@ -147,31 +162,45 @@
             Adresse du centre
             <span class="text-gray-400 font-normal text-xs">(optionnel si indépendant)</span>
           </label>
-          <input type="text" id="register-adresse" 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm"
-                 placeholder="Quartier Gounghin, Ouagadougou">
+          <input type="text" id="register-adresse"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-sm"
+            placeholder="Quartier Gounghin, Ouagadougou">
+        </div>
+
+        <!-- Champ Wallet Blockchain -->
+        <div id="field-wallet">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Adresse Wallet Blockchain (MetaMask) *
+          </label>
+          <input type="text" id="register-wallet" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition font-mono text-sm"
+            placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$"
+            title="L'adresse doit commencer par 0x et faire 42 caractères.">
+          <p class="text-[10px] text-gray-500 mt-1">Copiez l'adresse de votre MetaMask. Elle servira pour vos badges
+            NFT.</p>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
-          <input type="email" id="register-email" required 
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="vous@exemple.com">
+          <input type="email" id="register-email" required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="vous@exemple.com">
         </div>
-        
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
           <input type="password" id="register-password" required minlength="6"
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                 placeholder="Au moins 6 caractères">
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            placeholder="Au moins 6 caractères">
         </div>
 
-        <button type="submit" id="btn-register" 
-                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
+        <button type="submit" id="btn-register"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg">
           Créer mon compte
         </button>
 
-        <div id="register-error" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"></div>
+        <div id="register-error" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        </div>
       </form>
 
     </div>
@@ -180,16 +209,47 @@
     <div class="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500 border-t border-gray-200">
       <p>SkillBadge Phase 3 • MIABE Hackathon 2026</p>
       <p class="mt-1">Certification NFT sur Polygon Amoy</p>
+
+      <!-- Bouton de secours pour casser les boucles de redirection -->
+      <button onclick="forceLogout()"
+        class="mt-4 block mx-auto text-[10px] text-gray-400 underline hover:text-primary-600 transition">
+        Problème de connexion ? Cliquez ici pour réinitialiser
+      </button>
     </div>
 
   </div>
 
   <!-- Toast notification -->
-  <div id="toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+  <div id="toast"
+    class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
     <span id="toast-message">Succès !</span>
   </div>
 
   <!-- SCRIPTS -->
+  <script>
+    // Capture des erreurs globales pour le debug
+    window.addEventListener('error', (e) => {
+      console.error('❌ Erreur globale détectée:', e.message, 'dans', e.filename, 'à la ligne', e.lineno);
+    });
+
+    // Fonction de secours pour nettoyer la session
+    window.forceLogout = function () {
+      console.log('🔄 Réinitialisation forcée...');
+      sessionStorage.clear();
+      localStorage.clear();
+      // On tente de se déconnecter de Firebase si possible
+      try {
+        import('./js/firebase.js').then(({ auth }) => {
+          import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js').then(({ signOut }) => {
+            signOut(auth).finally(() => window.location.reload());
+          });
+        });
+      } catch (e) {
+        window.location.reload();
+      }
+    };
+  </script>
+
   <script type="module">
     // Imports Firebase (CDN)
     import { auth } from './js/firebase.js';
@@ -197,8 +257,10 @@
     //import { ref, set, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
     import { inscrire, connecter, getProfil } from './js/auth.js';
 
+    let redirectInProgress = false;
+
     // Gestion des onglets
-    window.showTab = function(tab) {
+    window.showTab = function (tab) {
       const loginForm = document.getElementById('form-login');
       const registerForm = document.getElementById('form-register');
       const loginTab = document.getElementById('tab-login');
@@ -218,7 +280,7 @@
     };
 
     // Sélection du rôle
-    window.selectRole = function(role) {
+    window.selectRole = function (role) {
       // Reset tous les boutons
       ['apprenant', 'formateur', 'recruteur'].forEach(r => {
         const btn = document.getElementById(`role-${r}`);
@@ -244,12 +306,23 @@
         const el = document.getElementById(id);
         if (el) role === 'formateur' ? el.classList.remove('hidden') : el.classList.add('hidden');
       });
+
+      // Gestion du champ wallet (obligatoire pour apprenant/formateur)
+      const walletField = document.getElementById('field-wallet');
+      const walletInput = document.getElementById('register-wallet');
+      if (role === 'recruteur') {
+        walletField.classList.add('hidden');
+        walletInput.required = false;
+      } else {
+        walletField.classList.remove('hidden');
+        walletInput.required = true;
+      }
     };
 
     // Gestion connexion
-    window.handleLogin = async function(event) {
+    window.handleLogin = async function (event) {
       event.preventDefault();
-      
+
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       const errorDiv = document.getElementById('login-error');
@@ -275,34 +348,36 @@
     };
 
     // Gestion inscription
-    window.handleRegister = async function(event) {
+    window.handleRegister = async function (event) {
       event.preventDefault();
-      
-      const nom           = document.getElementById('register-nom').value;
-      const email         = document.getElementById('register-email').value;
-      const password      = document.getElementById('register-password').value;
-      const role          = document.getElementById('register-role').value;
-      const organisation  = document.getElementById('register-organisation').value;
+
+      const nom = document.getElementById('register-nom').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const role = document.getElementById('register-role').value;
+      const organisation = document.getElementById('register-organisation').value;
       // Champs formateur
-      const portfolioUrl  = document.getElementById('register-portfolio')?.value  || '';
-      const preuveSociale = document.getElementById('register-preuves')?.value    || '';
-      const adresseCentre = document.getElementById('register-adresse')?.value    || '';
-      const errorDiv      = document.getElementById('register-error');
-      const btn           = document.getElementById('btn-register');
+      const portfolioUrl = document.getElementById('register-portfolio')?.value || '';
+      const preuveSociale = document.getElementById('register-preuves')?.value || '';
+      const adresseCentre = document.getElementById('register-adresse')?.value || '';
+      const wallet = document.getElementById('register-wallet')?.value || '';
+      const errorDiv = document.getElementById('register-error');
+      const btn = document.getElementById('btn-register');
 
       errorDiv.classList.add('hidden');
       btn.disabled = true;
       btn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Création du compte...</span>';
 
-      const result = await inscrire({ 
-        nom, 
-        email, 
-        motDePasse: password, 
-        role, 
+      const result = await inscrire({
+        nom,
+        email,
+        motDePasse: password,
+        role,
         organisation: role === 'apprenant' ? '' : organisation,
         portfolioUrl,
         preuveSociale,
         adresseCentre,
+        wallet
       });
 
       if (result.succes) {
@@ -339,26 +414,22 @@
 
     // Observer l'état de connexion au chargement
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
+      if (!user || redirectInProgress) return;
 
       try {
         const profil = await getProfil(user.uid);
         console.log('User UID :', user.uid);
         console.log('Profil récupéré :', profil);
+
         if (!profil) {
-          console.warn('Profil introuvable, redirection par défaut');
-          window.location.href = 'dashboard.html';
+          console.warn('Profil introuvable');
           return;
         }
+
+        redirectInProgress = true;
 
         // Formateur en attente → page pending
-        if (profil.role === 'formateur' && profil.statut === 'en_attente') {
-          window.location.href = 'pending.html';
-          return;
-        }
-
-        // Formateur refusé → page pending (avec message différent affiché là-bas)
-        if (profil.role === 'formateur' && profil.statut === 'refuse') {
+        if (profil.role === 'formateur' && (profil.statut === 'en_attente' || profil.statut === 'refuse')) {
           window.location.href = 'pending.html';
           return;
         }
@@ -368,19 +439,22 @@
           'formateur': 'formateur.html',
           'apprenant': 'portfolio.html',
           'recruteur': 'verify.html',
-          'admin':     'admin.html',
+          'admin': 'admin.html',
         };
+
         const destination = routes[profil.role];
         if (destination) {
+          console.log('Redirection vers :', destination);
           window.location.href = destination;
         }
-        console.log('Redirection vers :', routes[profil.role]);
 
       } catch (e) {
         console.error("Erreur lors de la récupération du profil :", e);
+        redirectInProgress = false;
       }
     });
   </script>
 
 </body>
+
 </html>
