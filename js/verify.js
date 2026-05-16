@@ -30,11 +30,11 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await get(ref(db, `utilisateurs/${user.uid}`));
     const profil = snap.val();
 
-    if (!profil || profil.role !== "recruteur") {
+    /* if (!profil || profil.role !== "recruteur") {
       alert("Accès réservé aux recruteurs autorisés.");
       window.location.href = "index.html";
       return;
-    }
+    } */
 
     currentRecruteur = { ...profil, uid: user.uid };
 
