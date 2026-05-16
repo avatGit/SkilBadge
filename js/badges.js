@@ -461,3 +461,7 @@ export function couleurDomaine(domaine) {
   };
   return couleurs[domaine] || "#e0e8f4";
 }
+
+// Export global pour le mode invité
+window.getBadgesApprenant = getBadgesApprenant;
+

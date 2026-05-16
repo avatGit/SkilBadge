@@ -255,3 +255,6 @@ function traduireErreur(code) {
   };
   return erreurs[code] || "Une erreur est survenue. Veuillez réessayer.";
 }
+
+// Export global pour le mode invité
+window.getProfilParWallet = getProfilParWallet;

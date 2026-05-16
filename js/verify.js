@@ -19,63 +19,64 @@ let allApprenants = [];
 let filteredApprenants = [];
 
 // ─────────────────────────────────────────────────────────
-//  DETECTION MODE INVITÉ
+//  DETECTION & ROUTAGE AU CHARGEMENT
 // ─────────────────────────────────────────────────────────
-const params = new URLSearchParams(window.location.search);
-const publicWallet = params.get('wallet');
-const publicUid = params.get('uid');
-const isGuestMode = !!(publicWallet || publicUid);
+const urlParams = new URLSearchParams(window.location.search);
+const guestWallet = urlParams.get('wallet')?.toLowerCase();
+const guestUid = urlParams.get('uid');
+const isGuestMode = !!(guestWallet || guestUid);
 
-// ─────────────────────────────────────────────────────────
-//  AUTH GUARD & INITIALISATION
-// ─────────────────────────────────────────────────────────
-onAuthStateChanged(auth, async (user) => {
-  if (isGuestMode) {
-    // Mode invité : Charger directement le portfolio public
-    document.getElementById('guest-banner').classList.remove('hidden');
-    document.getElementById('search-section').classList.add('hidden');
-    document.getElementById('annuaire-section').classList.add('hidden');
-    await chargerPortfolioPublic(publicUid, publicWallet);
-    return;
-  }
-
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  try {
-    const snap = await get(ref(db, `utilisateurs/${user.uid}`));
-    const profil = snap.val();
-
-    /* if (!profil || profil.role !== "recruteur") {
-      alert("Accès réservé aux recruteurs autorisés.");
-      window.location.href = "index.html";
+// Bypass Auth Guard si mode invité
+if (!isGuestMode) {
+  // === FLUX RECRUTEUR AUTHENTIFIÉ (EXISTANT) ===
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "index.html"; // Rediriger vers index ou login
       return;
-    } */
-
-    currentRecruteur = { ...profil, uid: user.uid };
-
-    // UI Header
-    document.getElementById("recruteur-info").classList.remove("hidden");
-    document.getElementById("rec-name").textContent = profil.nom || "Recruteur";
-    document.getElementById("rec-avatar").textContent = (profil.nom || "R")[0].toUpperCase();
-
-    // Charger les données
-    await chargerApprenants();
-
-    // Gérer les paramètres URL (ex: ?wallet=0x...)
-    const urlParams = new URLSearchParams(window.location.search);
-    const walletQuery = urlParams.get('wallet');
-    if (walletQuery) {
-      const candidate = allApprenants.find(a => a.wallet?.toLowerCase() === walletQuery.toLowerCase());
-      if (candidate) ouvrirPortfolio(candidate.uid);
     }
 
-  } catch (e) {
-    console.error("Erreur initialisation recruteur:", e);
+    try {
+      const snap = await get(ref(db, `utilisateurs/${user.uid}`));
+      const profil = snap.val();
+
+      // if (!profil || profil.role !== "recruteur") {
+      //   window.location.href = "index.html";
+      //   return;
+      // }
+
+      initRecruteurAuth({ ...profil, uid: user.uid });
+    } catch (e) {
+      console.error("Erreur auth recruteur:", e);
+    }
+  });
+} else {
+  // === FLUX INVITÉ PUBLIC ===
+  document.addEventListener("DOMContentLoaded", initGuestMode);
+}
+
+// Initialisation pour le recruteur connecté
+async function initRecruteurAuth(profil) {
+  currentRecruteur = profil;
+
+  // UI Header
+  const recInfo = document.getElementById("recruteur-info");
+  const recName = document.getElementById("rec-name");
+  const recAvatar = document.getElementById("rec-avatar");
+
+  if (recInfo) recInfo.classList.remove("hidden");
+  if (recName) recName.textContent = profil.nom || "Recruteur";
+  if (recAvatar) recAvatar.textContent = (profil.nom || "R")[0].toUpperCase();
+
+  // Charger les données de l'annuaire
+  await chargerApprenants();
+
+  // Gérer le cas où un paramètre wallet est présent (recherche directe après login)
+  const walletQuery = urlParams.get('wallet');
+  if (walletQuery) {
+    const candidate = allApprenants.find(a => a.wallet?.toLowerCase() === walletQuery.toLowerCase());
+    if (candidate) ouvrirPortfolio(candidate.uid);
   }
-});
+}
 
 // ─────────────────────────────────────────────────────────
 //  RECHERCHE & CHARGEMENT
@@ -191,53 +192,105 @@ document.addEventListener("click", (e) => {
 });
 
 // ─────────────────────────────────────────────────────────
-//  CHARGEMENT PUBLIC (GUEST MODE)
+//  INITIALISATION MODE INVITÉ
 // ─────────────────────────────────────────────────────────
-async function chargerPortfolioPublic(uid, wallet) {
-  const container = document.getElementById('public-portfolio');
-  container.classList.remove('hidden');
-  container.innerHTML = `
-    <div class="py-20 text-center">
-      <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="mt-4 text-slate-400">Chargement du portfolio public...</p>
-    </div>
-  `;
+async function initGuestMode() {
+  // 1. Masquer la recherche & afficher la bannière invité
+  const searchSection = document.getElementById("search-section");
+  const annuaireSection = document.getElementById("annuaire-section");
+  const guestBanner = document.getElementById("guest-banner");
+
+  if (searchSection) searchSection.style.display = "none";
+  if (annuaireSection) annuaireSection.style.display = "none";
+  if (guestBanner) guestBanner.classList.remove("hidden");
+
+  // 2. Résoudre l'UID si seul le wallet est fourni
+  let targetUid = guestUid;
+  if (!targetUid && guestWallet) {
+    const profil = await window.getProfilParWallet?.(guestWallet);
+    targetUid = profil?.uid;
+  }
+
+  // 3. Charger le portfolio ou afficher erreur
+  const container = document.getElementById("portfolio-container") || document.getElementById("guest-portfolio");
+  if (!container) return;
+
+  container.classList.remove("hidden");
+  container.innerHTML = `<div class="py-20 text-center"><div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p class="mt-4 text-slate-400">Chargement du portfolio public...</p></div>`;
+
+  if (!targetUid) {
+    container.innerHTML = `
+      <div class="text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl">
+        <p class="text-amber-400 font-medium text-lg">Candidat introuvable</p>
+        <p class="text-slate-500 text-sm mt-1">Vérifiez le lien ou contactez l'apprenant.</p>
+        <button onclick="exitGuestMode()" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors">Retour</button>
+      </div>`;
+    return;
+  }
 
   try {
-    let targetUid = uid;
-    let profil = null;
-
-    if (uid) {
-      profil = await getProfil(uid);
-    } else if (wallet) {
-      profil = await getProfilParWallet(wallet.toLowerCase());
-      targetUid = profil?.uid;
-    }
-
-    if (!profil || !targetUid) {
-      container.innerHTML = `
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center">
-          <p class="text-slate-400 text-lg mb-4">Candidat introuvable.</p>
-          <button onclick="window.location.href='verify.html'" class="px-6 py-2 bg-blue-600 rounded-lg font-bold">Retour à la recherche</button>
-        </div>
-      `;
-      return;
-    }
-
-    // Charger les badges
-    const badges = await getBadgesApprenant(targetUid);
-
-    // Rendre le contenu dans le container public
-    await renderPortfolioContent(profil, badges, container, true);
-
+    const badges = await window.getBadgesApprenant?.(targetUid);
+    renderGuestPortfolio(badges, targetUid);
   } catch (e) {
-    console.error("Erreur portfolio public:", e);
-    container.innerHTML = '<p class="text-center text-red-400 py-20">Erreur lors du chargement du portfolio.</p>';
+    container.innerHTML = `<p class="text-red-400 text-center py-8">Erreur de chargement.</p>`;
+    console.error("Guest load error:", e);
   }
 }
 
 // ─────────────────────────────────────────────────────────
-//  MODAL & PORTFOLIO
+//  RENDU PORTFOLIO INVITÉ
+// ─────────────────────────────────────────────────────────
+function renderGuestPortfolio(badges, uid) {
+  const container = document.getElementById("portfolio-container") || document.getElementById("guest-portfolio");
+  if (!container) return;
+
+  if (!badges || badges.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
+        <p class="text-slate-300 font-medium">Aucun badge certifié pour ce candidat.</p>
+        <p class="text-slate-500 text-sm mt-1">Les compétences n'ont pas encore été validées on-chain.</p>
+        <button onclick="exitGuestMode()" class="mt-4 text-blue-400 hover:underline">← Retour à la recherche</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-white">Portfolio du candidat</h2>
+      <button onclick="exitGuestMode()" class="text-sm text-slate-400 hover:text-white underline">← Retour à la recherche</button>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      ${badges.map(b => `
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex justify-between items-start mb-3">
+            <div class="w-10 h-10 bg-blue-900/40 rounded-lg flex items-center justify-center text-lg">🏆</div>
+            <span class="px-2 py-0.5 bg-emerald-900/30 text-emerald-400 text-[10px] font-bold rounded border border-emerald-800">
+              ✅ ON-CHAIN
+            </span>
+          </div>
+          <h3 class="font-bold text-white mb-1">${b.nom}</h3>
+          <p class="text-xs text-slate-400 mb-3">${b.domaine}</p>
+          <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 mb-4">
+            <div><span class="text-slate-500 block">Niveau</span><span class="font-medium text-blue-300">${b.niveau}</span></div>
+            <div><span class="text-slate-500 block">Émis par</span><span class="font-medium truncate block">${b.formateurNom}</span></div>
+          </div>
+          <div class="pt-3 border-t border-slate-700 flex justify-between items-center">
+            <span class="text-[10px] text-slate-500">${new Date(b.dateEmission).toLocaleDateString('fr-FR')}</span>
+            ${b.txHash ? `<a href="https://amoy.polygonscan.com/tx/${b.txHash}" target="_blank" class="text-xs text-blue-400 hover:underline">Block Explorer ↗</a>` : ''}
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+// Sortie mode invité
+window.exitGuestMode = function () {
+  window.location.href = "verify.html";
+};
+
+// ─────────────────────────────────────────────────────────
+//  MODAL & PORTFOLIO (ANCIEN FLUX RECRUTEUR)
 // ─────────────────────────────────────────────────────────
 window.ouvrirPortfolio = async function (uid) {
   const modal = document.getElementById("portfolio-modal");
