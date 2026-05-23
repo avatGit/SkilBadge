@@ -25,11 +25,11 @@ Architecture **100 % hybride** : UX temps réel et indexation rapide via Firebas
 |--------|----------------|--------|
 | **Auth Multi-rôles** | Inscription/Connexion — Apprenant, Formateur, Recruteur, Admin | ✅ Live |
 | **Mint On-Chain** | Émission ERC-1155 sur Polygon Amoy + Métadonnées IPFS | ✅ Live |
-| **Vérification Publique** | Lien de partage accessible sans compte (Mode Invité) | ✅ Live |
+| **Vérification Publique** | Lien de partage accessible sans compte (Mode Invité) | 95% |
 | **Workflow Demandes** | Apprenant soumet → Formateur valide/émet ou refuse, en temps réel | ✅ Live |
 | **Sécurité Hybride** | Whitelist on-chain (`isFormateur`) + Règles Firebase strictes | ✅ Live |
 | **Portail Recruteur** | Recherche par wallet/nom/email + vérification `balanceOf` en direct | ✅ Live |
-| **Interface Admin** | Approbation des formateurs + gestion des accès | ✅ Live |
+| **Interface Admin** | Approbation des formateurs + gestion des accès | 80% |
 
 ---
 
